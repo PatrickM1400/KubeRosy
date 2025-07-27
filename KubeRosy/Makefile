@@ -3,7 +3,7 @@ CLANG ?= clang-14
 STRIP ?= llvm-strip-14
 OBJCOPY ?= llvm-objcopy-14
 #CFLAGS := -O2 -g -Wall -Werror $(CFLAGS)
-CFLAGS := -O2 -g $(CFLAGS)
+CFLAGS := -O2 -g $(CFLAGS) -I/usr/include/x86_64-linux-gnu
 
 # This will generate bpf_bpfeb and bpf_bpfel .o and .go automatically using bpf2go.
 # Also generate monitoring.o for object file for main.go to use in the future.
