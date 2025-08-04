@@ -77,6 +77,7 @@ type bpfProgramSpecs struct {
 	FilePermission    *ebpf.ProgramSpec `ebpf:"file_permission"`
 	FixSetgid         *ebpf.ProgramSpec `ebpf:"fix_setgid"`
 	FixSetuid         *ebpf.ProgramSpec `ebpf:"fix_setuid"`
+	HandleTp          *ebpf.ProgramSpec `ebpf:"handle_tp"`
 	MmapAddr          *ebpf.ProgramSpec `ebpf:"mmap_addr"`
 	MmapFile          *ebpf.ProgramSpec `ebpf:"mmap_file"`
 	MoveMount         *ebpf.ProgramSpec `ebpf:"move_mount"`
@@ -213,6 +214,7 @@ type bpfPrograms struct {
 	FilePermission    *ebpf.Program `ebpf:"file_permission"`
 	FixSetgid         *ebpf.Program `ebpf:"fix_setgid"`
 	FixSetuid         *ebpf.Program `ebpf:"fix_setuid"`
+	HandleTp          *ebpf.Program `ebpf:"handle_tp"`
 	MmapAddr          *ebpf.Program `ebpf:"mmap_addr"`
 	MmapFile          *ebpf.Program `ebpf:"mmap_file"`
 	MoveMount         *ebpf.Program `ebpf:"move_mount"`
@@ -261,6 +263,7 @@ func (p *bpfPrograms) Close() error {
 		p.FilePermission,
 		p.FixSetgid,
 		p.FixSetuid,
+		p.HandleTp,
 		p.MmapAddr,
 		p.MmapFile,
 		p.MoveMount,

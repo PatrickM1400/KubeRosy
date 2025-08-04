@@ -254,8 +254,8 @@ func main() {
 		log.Fatalf("opening ringbuf reader: %s", err)
 	}
 	defer rd.Close()
-	// Daemon()
-	containerdDaemon()
+	Daemon()
+	// containerdDaemon()
 
 	go func() {
 		<-stopper

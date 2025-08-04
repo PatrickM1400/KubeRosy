@@ -279,6 +279,21 @@ u32 getPidInum(struct task_struct *task) {
   return BPF_CORE_READ(task, nsproxy, pid_ns_for_children, ns).inum;
 }
 
+
+typedef unsigned int u32;
+typedef int pid_t;
+const pid_t pid_filter = 0;
+
+SEC("tp/syscalls/sys_enter_write")
+int handle_tp(void *ctx)
+{
+ pid_t pid = bpf_get_current_pid_tgid() >> 32;
+ if (pid_filter && pid != pid_filter)
+  return 0;
+ bpf_printk("BPF triggered sys_enter_write from PID %d.\n", pid);
+ return 0;
+}
+
 /////////////////////////////////////////////////
 
 // SEC("raw_tracepoint/sys_enter_tail")
@@ -327,6 +342,7 @@ int rtp_sys_enter(struct bpf_raw_tracepoint_args *ctx){
     // bpf_tail_call(ctx, &prog_array, SYS_ENTER_TAIL);
     u64 id = ctx->args[1];
     set_syscall_map(pidns, mntns, 0, id);
+    bpf_printk("Within sys_enter\n");
     return 0;
 }
 
@@ -373,7 +389,7 @@ int BPF_PROG(file_permission, struct file *file, int mask){
         
     u32 policy = lookup_policy(pidns, mntns, syscall);
     if(!policy){
-        // bpf_printk("task_alloc triggered! policy allowed");
+        bpf_printk("task_alloc triggered! policy allowed");
         return 0;
     }
 
@@ -415,10 +431,10 @@ int BPF_PROG(task_alloc, struct task_struct *task, unsigned long clone_flags, in
         
     u32 policy = lookup_policy(pidns, mntns, syscall);
     if(!policy){
-        // bpf_printk("task_alloc triggered! policy allowed");
+        bpf_printk("task_alloc triggered! policy allowed");
         return 0;
     }
-    // bpf_printk("task_alloc triggered! policy blocked");
+    bpf_printk("task_alloc triggered! policy blocked");
     struct pid_syscall_args key;
     key.syscall = syscall;
     key.namespace = ns;
@@ -615,7 +631,7 @@ int BPF_PROG(path_chmod, struct path *path, umode_t mode, int ret){
     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
     if(!is_container_process)
         return 0;
-    // bpf_printk("path_chmod triggered! in container process");
+    bpf_printk("path_chmod triggered! in container process");
     if(*is_container_process){
         u32 syscall = lookup_syscall(ns, PATH_CHMOD);
         
@@ -625,7 +641,7 @@ int BPF_PROG(path_chmod, struct path *path, umode_t mode, int ret){
         struct pid_syscall_args key;
         key.syscall = syscall;
         key.namespace = ns;
-        // bpf_printk("path_chmod #1");
+        bpf_printk("path_chmod #1");
         ///
         u8 global_path_buf[MAX_PATH_LEN];
 
@@ -636,7 +652,7 @@ int BPF_PROG(path_chmod, struct path *path, umode_t mode, int ret){
         // Reset global buffer
         for (int i = 0; i < MAX_PATH_LEN; i++)
             global_path_buf[i] = '\0';
-        // bpf_printk("path_chmod #2");
+        bpf_printk("path_chmod #2");
 
         for(int j = 0; j < 10; j++) {
             if(d == d->d_parent || top >= MAX_PATH_LEN - 1 || !d)
@@ -650,7 +666,7 @@ int BPF_PROG(path_chmod, struct path *path, umode_t mode, int ret){
             }
             if(len < 1)
                 return 0;
-            // bpf_printk("path_chmod #2-1 d_name.name : %s", name_tmp);
+            bpf_printk("path_chmod #2-1 d_name.name : %s", name_tmp);
             for (int i = len - 1; i >= 0 && top < MAX_PATH_LEN - 2; i--) {
                 global_path_buf[top++] = name_tmp[i];
             }
@@ -660,7 +676,7 @@ int BPF_PROG(path_chmod, struct path *path, umode_t mode, int ret){
             d = d->d_parent;
         }
 
-        // bpf_printk("path_chmod #3");
+        bpf_printk("path_chmod #3");
         // Reverse the whole path
         for (int i = 0; i < top / 2; i++) {
             u8 temp = global_path_buf[i];
@@ -668,11 +684,11 @@ int BPF_PROG(path_chmod, struct path *path, umode_t mode, int ret){
             global_path_buf[top - 1 - i] = temp;
         }
         ///
-        // bpf_printk("path_chmod #3-1 global_path_buf : %s", global_path_buf);
+        bpf_printk("path_chmod #3-1 global_path_buf : %s", global_path_buf);
 
         u32 policy = lookup_policy(pidns, mntns, syscall);
         if(!policy){
-            // bpf_printk("path_chmod triggered! policy allowed");
+            bpf_printk("path_chmod triggered! policy allowed");
             return 0;
         }
         char *chmod_allow = bpf_map_lookup_elem(&policy_params_path_chmod, &key);
@@ -683,7 +699,7 @@ int BPF_PROG(path_chmod, struct path *path, umode_t mode, int ret){
                     break;
                 is_allowed = 1;
                 u16 policy_mode = (((u16)(chmod_allow[i * (MAX_PATH_LEN + 2) + 16]) & 0x00FF) << 8) | ((u16)(chmod_allow[i * (MAX_PATH_LEN + 2) + 17]) & 0x00FF);
-                // bpf_printk("policy_mode : %d", policy_mode);
+                bpf_printk("policy_mode : %d", policy_mode);
                 for(int j = 0; j < MAX_PATH_LEN; j++){
                     if(chmod_allow[i * (MAX_PATH_LEN + 2) + j] == '\0')
                         is_allowed = 0;
@@ -1110,6 +1126,7 @@ int BPF_PROG(socket_bind, struct socket *sock, struct sockaddr *address, int add
     ns.pidns = pidns;
     ns.mountns = mntns;
     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+    bpf_printk("Check if container process");
     if(!is_container_process)
         return 0;
     bpf_printk("bind triggered2!");

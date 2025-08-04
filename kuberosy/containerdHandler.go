@@ -218,7 +218,7 @@ func MonitorContainerdEvents() {
 }
 
 func containerdDaemon() {
-	log.Println("Waiting for the response")
+	log.Println("Waiting for the response in containerdHandler")
 
 	go MonitorContainerdEvents()
 }

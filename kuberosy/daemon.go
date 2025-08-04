@@ -190,7 +190,7 @@ func Daemon() {
 	
     cm := NewContainerDaemon()
 
-    log.Println("Waiting for the response")
+    log.Println("Waiting for the response for Daemon")
 
     go cm.MonitorDockerEvent()
 
