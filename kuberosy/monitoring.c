@@ -31,8 +31,8 @@ struct {
 const struct event *unused __attribute__((unused));
 
 struct pid_mount_ns {
-    u32 mountns;
-    u32 pidns;
+    u64 mountns;
+    u64 pidns;
 };
 
 struct pid_syscall_args {
@@ -272,27 +272,13 @@ u32 set_syscall_map(u32 pidns, u32 mntns, u32 lsm, u32 syscall_num){
 }
 
 u32 getMntInum(struct task_struct *task){
-    return BPF_CORE_READ(task, nsproxy, mnt_ns, ns).inum;
+    return BPF_CORE_READ(task, nsproxy, mnt_ns, ns.inum);
 }
 
 u32 getPidInum(struct task_struct *task) {
-  return BPF_CORE_READ(task, nsproxy, pid_ns_for_children, ns).inum;
+  return BPF_CORE_READ(task, nsproxy, pid_ns_for_children, ns.inum);
 }
 
-
-typedef unsigned int u32;
-typedef int pid_t;
-const pid_t pid_filter = 0;
-
-SEC("tp/syscalls/sys_enter_write")
-int handle_tp(void *ctx)
-{
- pid_t pid = bpf_get_current_pid_tgid() >> 32;
- if (pid_filter && pid != pid_filter)
-  return 0;
- bpf_printk("BPF triggered sys_enter_write from PID %d.\n", pid);
- return 0;
-}
 
 /////////////////////////////////////////////////
 
@@ -332,17 +318,20 @@ int rtp_sys_enter(struct bpf_raw_tracepoint_args *ctx){
     if(!task)
         return 0;
     struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
+    u64 pidns = getPidInum(task);
+    u64 mntns = getMntInum(task);
     ns.pidns = pidns;
     ns.mountns = mntns;
+    bpf_printk("namespace is pidns %u", pidns);
+    bpf_printk("namespace is mntns %u", mntns);
     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+    bpf_printk("Within sys_enter 1");
     if(!is_container_process)
         return 0;
     // bpf_tail_call(ctx, &prog_array, SYS_ENTER_TAIL);
     u64 id = ctx->args[1];
     set_syscall_map(pidns, mntns, 0, id);
-    bpf_printk("Within sys_enter\n");
+    bpf_printk("Within sys_enter 2");
     return 0;
 }
 

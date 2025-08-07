@@ -1,45 +1,81 @@
 package main
 
 import (
-    "strings"
-    "log"
+	"context"
 	"encoding/binary"
+	"fmt"
+	"log"
+	"os"
+	"strings"
+
 	"github.com/cilium/ebpf"
-    "github.com/docker/docker/api/types/events"
+	"github.com/docker/docker/api/types/events"
 )
 
 const (
-	comm_pid_map_path        = "/sys/fs/bpf/daemon_map/containerID_PID_map"
+	comm_pid_map_path = "/sys/fs/bpf/daemon_map/containerID_PID_map"
+	monitoring_map    = "/sys/fs/bpf/daemon_map/monitoring_map"
 )
 
+type pid_mount_ns struct {
+	mountns uint64
+	pidns   uint64
+}
 
 type ContainerDaemon struct {
-    EventChan <-chan events.Message
+	EventChan <-chan events.Message
 
-    EventLogs []DockerEvent
+	EventLogs []DockerEvent
 
-    Containers     map[string]Container
+	Containers map[string]Container
 }
 
 func NewContainerDaemon() *ContainerDaemon {
-    cm := new(ContainerDaemon)
+	cm := new(ContainerDaemon)
 
-    cm.EventChan = Docker.GetEventChannel()
-    cm.EventLogs = []DockerEvent{}
+	cm.EventChan = Docker.GetEventChannel()
+	cm.EventLogs = []DockerEvent{}
 
-    cm.Containers = map[string]Container{}
+	cm.Containers = map[string]Container{}
 
-    return cm
+	return cm
+}
+
+// getNamespaceID reads the symbolic link for a given namespace type and parses the ID.
+func getNamespaceID(pid int, nsType string) uint64 {
+	// Construct the path to the namespace symbolic link
+	nsPath := fmt.Sprintf("/proc/%d/ns/%s", pid, nsType)
+
+	// Read the symbolic link
+	link, err := os.Readlink(nsPath)
+	if err != nil {
+		log.Fatalf("error reading namespace link %s: %w", nsPath, err)
+	}
+
+	// The link format is "nstype:[inode_number]". We parse the inode number.
+	var nsID uint64
+	// Example link string: "pid:[4026531836]"
+	cutLink, found := strings.CutPrefix(link, nsType)
+	if !found {
+		log.Fatalf("Unexpected link format found: '%s", link)
+	}
+
+	scanned, err := fmt.Sscanf(cutLink, ":[%d]", &nsID)
+	if err != nil || scanned != 1 {
+		log.Fatalf("error parsing namespace ID from string '%s': %w", link, err)
+	}
+
+	return nsID
 }
 
 func (cm *ContainerDaemon) UpdateContainerFromList() {
-    containerlist, err := Docker.GetContainerList()
-    if err != nil {
-        log.Fatal(err)
-        return
-    }
+	containerlist, err := Docker.GetContainerList()
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
 
-    for _, container := range containerlist {
+	for _, container := range containerlist {
 		name := strings.TrimLeft(container.Names[0], "/")
 
 		// skip paused containers in k8s
@@ -54,33 +90,25 @@ func (cm *ContainerDaemon) UpdateContainerFromList() {
 }
 
 func (cm *ContainerDaemon) MonitorDockerEvent() {
-    defer log.Println("err with MonitorDockerEvent")
+	defer log.Println("err with MonitorDockerEvent")
 
 	cm.UpdateContainerFromList()
-	
-    for {
-		select {
 
-		case msg, valid := <-cm.EventChan:
-			if !valid {
-				continue
-			}
-
-			// if message type is container
-			if msg.Type == "container" {
-				cm.UpdateContainer(msg.ID, string(msg.Action))
-			}
-
-			// build event log and push it to the list
-			cm.EventLogs = append(cm.EventLogs, DockerEvent{
-				ContainerID:   msg.Actor.ID,
-				ContainerName: msg.Actor.Attributes["name"],
-				Type:          string(msg.Type),
-				Action:        string(msg.Action),
-				RawEvent:      msg,
-			})
-			log.Printf("Container ID : ", msg.Actor.ID, "\nType : ", msg.Type,"\nAction : ", msg.Action,"\nContainer name : ", msg.Actor.Attributes["name"], "\nContainer PID : ", cm.Containers[msg.Actor.ID].ContainerPID, "\n")
+	for msg := range cm.EventChan {
+		// if message type is container
+		if msg.Type == "container" {
+			cm.UpdateContainer(msg.Actor.ID, string(msg.Action))
 		}
+
+		// build event log and push it to the list
+		cm.EventLogs = append(cm.EventLogs, DockerEvent{
+			ContainerID:   msg.Actor.ID,
+			ContainerName: msg.Actor.Attributes["name"],
+			Type:          string(msg.Type),
+			Action:        string(msg.Action),
+			RawEvent:      msg,
+		})
+		log.Print("Container ID : ", msg.Actor.ID, "\nType : ", msg.Type, "\nAction : ", msg.Action, "\nContainer name : ", msg.Actor.Attributes["name"], "\nContainer PID : ", cm.Containers[msg.Actor.ID].ContainerPID, "\n\n")
 	}
 }
 
@@ -91,7 +119,7 @@ func (cm *ContainerDaemon) UpdateContainer(containerID, action string) {
 
 	if action == "start" {
 		var err error
-		
+
 		// get container information from docker client
 		container, err = Docker.GetContainerInfo(containerID)
 		if err != nil {
@@ -114,13 +142,43 @@ func (cm *ContainerDaemon) UpdateContainer(containerID, action string) {
 		} else {
 			return
 		}
-		
-		PinMap(container.ContainerPID, container.ContainerID)
 
+		PinMap(container.ContainerPID, container.ContainerID)
 
 		log.Printf("Detected a new container (%s/%s)", container.MicroserviceName, container.ContainerName)
 
-		
+		context := context.Background()
+		json, err := Docker.DockerClient.ContainerInspect(context, container.ContainerID)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+		log.Printf("Container PID: %d", json.State.Pid)
+		hostPid := json.State.Pid
+
+		if hostPid != 0 {
+			pidNS_ID := getNamespaceID(hostPid, "pid")
+			mntNS_ID := getNamespaceID(hostPid, "mnt")
+
+			log.Printf("Process Namespace ID: %d\n", pidNS_ID)
+			log.Printf("Mount Namespace ID:   %d\n", mntNS_ID)
+
+			bpf_monitoring_map, err := ebpf.LoadPinnedMap(monitoring_map, nil)
+			if err != nil || bpf_monitoring_map == nil {
+				log.Fatalf("Error loading pinned map: %v", err)
+			}
+			defer bpf_monitoring_map.Close()
+
+			ns := pid_mount_ns{pidns: pidNS_ID, mountns: mntNS_ID}
+			var val uint32 = 1
+
+			err = bpf_monitoring_map.Update(ns, val, ebpf.UpdateAny)
+			if err != nil {
+				log.Print("could not put element to map: %s", err)
+			}
+
+		}
+
 	} else if action == "stop" || action == "destroy" {
 		// case 1: kill -> die -> stop
 		// case 2: kill -> die -> destroy
@@ -130,7 +188,7 @@ func (cm *ContainerDaemon) UpdateContainer(containerID, action string) {
 		if !ok {
 			return
 		}
-		
+
 		container = val
 		UnpinMap(container.ContainerPID, container.ContainerID)
 		delete(cm.Containers, containerID)
@@ -139,13 +197,12 @@ func (cm *ContainerDaemon) UpdateContainer(containerID, action string) {
 			return
 		}
 
-		
 		log.Printf("Detected a removed container (%s/%s)", container.MicroserviceName, container.ContainerName)
 	}
 
 }
 
-func PinMap(pid uint32, comm string){
+func PinMap(pid uint32, comm string) {
 	bpf_comm_Map, err := ebpf.LoadPinnedMap(comm_pid_map_path, nil)
 	if err != nil || bpf_comm_Map == nil {
 		log.Fatalf("Error loading pinned map: %v", err)
@@ -156,42 +213,40 @@ func PinMap(pid uint32, comm string){
 	var keyBytes [16]byte
 
 	copy(keyBytes[:], comm)
-    binary.LittleEndian.PutUint32(pidBytes[:], pid)
-	
+	binary.LittleEndian.PutUint32(pidBytes[:], pid)
 
-	if  pid != 0 {
+	if pid != 0 {
 		err = bpf_comm_Map.Update(keyBytes, pidBytes, ebpf.UpdateAny)
-		if err != nil{
+		if err != nil {
 			log.Print("could not put element to map: %s", err)
 		}
 	}
 }
 
-func UnpinMap(pid uint32, comm string){
+func UnpinMap(pid uint32, comm string) {
 	bpf_comm_Map, err := ebpf.LoadPinnedMap(comm_pid_map_path, nil)
 	if err != nil || bpf_comm_Map == nil {
 		log.Print("Error loading pinned map: %v", err)
 	}
 	defer bpf_comm_Map.Close()
-	
+
 	var keyBytes [16]byte
 	copy(keyBytes[:], comm)
 	var pidBytes [4]byte
 	binary.LittleEndian.PutUint32(pidBytes[:], pid)
 
 	err = bpf_comm_Map.Delete(keyBytes)
-	if err != nil{
-        log.Print("could not delete element : %s", err)
-    }
+	if err != nil {
+		log.Print("could not delete element : %s", err)
+	}
 }
 
-
 func Daemon() {
-	
-    cm := NewContainerDaemon()
 
-    log.Println("Waiting for the response for Daemon")
+	cm := NewContainerDaemon()
 
-    go cm.MonitorDockerEvent()
+	log.Println("Waiting for the response for Daemon")
+
+	go cm.MonitorDockerEvent()
 
 }

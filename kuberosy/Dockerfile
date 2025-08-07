@@ -1,9 +1,7 @@
-FROM amd64/golang:latest    
+FROM debian:12    
 
-WORKDIR /usr/daemon
+WORKDIR /src
 
-COPY . .
+COPY ./hello .
 
-RUN go build .
-
-ENTRYPOINT ["./core"]
+ENTRYPOINT ["./hello"]

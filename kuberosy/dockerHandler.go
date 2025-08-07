@@ -27,7 +27,7 @@ type DockerHandler struct {
 
 func NewDockerHandler() *DockerHandler {
 	docker := &DockerHandler{}
-	docker.DockerClient, _ = client.NewEnvClient()
+	docker.DockerClient, _ = client.NewClientWithOpts(client.FromEnv)
 
 	return docker
 }

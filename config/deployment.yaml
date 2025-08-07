@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: run-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: run-agent
+  template:
+    metadata:
+      labels:
+        app: run-agent
+    spec:
+      containers:
+        - name: run-agent
+          image: hello-world:latest
+          ports:
+            - containerPort: 8080
+      restartPolicy: Never
