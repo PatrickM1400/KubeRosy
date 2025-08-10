@@ -254,7 +254,7 @@ u32 set_syscall_map(u32 pidns, u32 mntns, u32 lsm, u32 syscall_num){
             return 0;
     }
     u32 *val = bpf_map_lookup_elem(&lsm_to_syscall, &ns);
-    if(!val){
+    if(!val){ // Namespace struct does not exist yet
         u32 tmp[64];
         for(int i = 0; i < 64; i++)
             tmp[i] = 0;
@@ -266,7 +266,7 @@ u32 set_syscall_map(u32 pidns, u32 mntns, u32 lsm, u32 syscall_num){
         bpf_map_update_elem(&lsm_to_syscall, &ns, tmp, BPF_ANY);
         return 0;
     }
-    val[lsm] = syscall_num;
+    val[lsm] = syscall_num; // Namespace struct exist, updating lsm to syscall mapping
     bpf_map_update_elem(&lsm_to_syscall, &ns, val, BPF_ANY);
     return 0;
 }
@@ -335,6 +335,28 @@ int rtp_sys_enter(struct bpf_raw_tracepoint_args *ctx){
     return 0;
 }
 
+SEC("kprobe/sys_write_entry")
+int BPF_KPROBE(temp_write_callback, unsigned int fd, const char *buf, size_t count)
+{
+    u32 pid = bpf_get_current_pid_tgid() >> 32;
+    u8 comm[16] = {0};
+    bpf_get_current_comm(comm, 16);
+    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+    if(!task)
+        return 0;
+    struct pid_mount_ns ns;
+    u32 pidns = getPidInum(task);
+    u32 mntns = getMntInum(task);
+    ns.pidns = pidns;
+    ns.mountns = mntns;
+    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+    if(!is_container_process)
+        return 0;
+
+    bpf_printk("Write syscall 2 triggered for fd %u", fd);
+    return 0;
+}
+
 
 
 /*
@@ -370,15 +392,17 @@ int BPF_PROG(file_permission, struct file *file, int mask){
     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
     if(!is_container_process)
         return 0;
-    u32 syscall = lookup_syscall(ns, FILE_PERMISSION);
+    u32 syscall = lookup_syscall(ns, FILE_PERMISSION); //For each name space there is only one syscall associated with it?
     
     u32 init_failed = set_syscall_map(pidns, mntns, FILE_PERMISSION, 0);
     if(init_failed)
         return 0;
+
+    bpf_printk("file_permission triggered with syscall number %d and comm %s", syscall, comm);
         
     u32 policy = lookup_policy(pidns, mntns, syscall);
     if(!policy){
-        bpf_printk("task_alloc triggered! policy allowed");
+        bpf_printk("file_permission triggered! policy allowed");
         return 0;
     }
 

@@ -41,6 +41,17 @@ func NewContainerDaemon() *ContainerDaemon {
 	return cm
 }
 
+func init() {
+
+	fileName := "containerEventLog"
+	logFile, err := os.Create(fileName)
+	if err != nil {
+		log.Printf("Failed to create containerEventLog: %s", err)
+	}
+
+	log.SetOutput(logFile)
+}
+
 // getNamespaceID reads the symbolic link for a given namespace type and parses the ID.
 func getNamespaceID(pid int, nsType string) uint64 {
 	// Construct the path to the namespace symbolic link
@@ -174,7 +185,7 @@ func (cm *ContainerDaemon) UpdateContainer(containerID, action string) {
 
 			err = bpf_monitoring_map.Update(ns, val, ebpf.UpdateAny)
 			if err != nil {
-				log.Print("could not put element to map: %s", err)
+				log.Printf("could not put element to map: %s", err)
 			}
 
 		}

@@ -4,14 +4,13 @@ STRIP ?= llvm-strip-14
 OBJCOPY ?= llvm-objcopy-14
 #CFLAGS := -O2 -g -Wall -Werror $(CFLAGS)
 CFLAGS := -O2 -g $(CFLAGS) -I/usr/include/x86_64-linux-gnu
-
 # This will generate bpf_bpfel_x86 .o and .go automatically using bpf2go.
 # Also generate monitoring.o for object file for main.go to use in the future.
 generate: export BPF_CLANG := $(CLANG)
 generate: export BPF_CFLAGS := $(CFLAGS)
 generate:
 	go generate ./...
-	clang -O2 -target bpf -D__TARGET_ARCH_X86 -c monitoring.c -o monitoring.o -g
+	clang -target bpf -D__TARGET_ARCH_x86 -O2 -g -c monitoring.c -o monitoring.o
 
 # This will clean up everything generated automatically.
 clean:

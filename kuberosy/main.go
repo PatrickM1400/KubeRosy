@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"path"
 	"syscall"
+
 	"github.com/cilium/ebpf"
 	"github.com/cilium/ebpf/link"
 	"github.com/cilium/ebpf/ringbuf"
@@ -24,7 +25,8 @@ const (
 	symbol    = "wrap_free"
 	bpfFSPath = "/sys/fs/bpf"
 )
-//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc $BPF_CLANG -cflags $BPF_CFLAGS -target amd64 -type event bpf monitoring.c -- -I../headers
+
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc $BPF_CLANG -cflags $BPF_CFLAGS -target amd64 -type event -tags linux bpf monitoring.c
 
 func main() {
 	// buffered channel 생성
@@ -51,7 +53,7 @@ func main() {
 	}
 	defer objs.Close()
 
-	rtp_sys_enter, err := link.AttachRawTracepoint(link.RawTracepointOptions{Name:"sys_enter",Program: objs.RtpSysEnter})
+	rtp_sys_enter, err := link.AttachRawTracepoint(link.RawTracepointOptions{Name: "sys_enter", Program: objs.RtpSysEnter})
 	if err != nil {
 		log.Fatalf("opening rtp_sys_enter: %s", err)
 	}
@@ -65,6 +67,10 @@ func main() {
 	// defer rtp_sys_enter_tail.Close()
 	// log.Println("rtp_sys_enter_tail Attached!")
 
+	sys_write_hook, err := link.Kprobe("sys_write", objs.TempWriteCallback, nil)
+	defer sys_write_hook.Close()
+	log.Println("sys_write kprobe attached!")
+
 	lsm_task_alloc, err := link.AttachLSM(link.LSMOptions{Program: objs.TaskAlloc})
 	defer lsm_task_alloc.Close()
 	log.Println("lsm_task_alloc Attached!")
@@ -72,7 +78,7 @@ func main() {
 	lsm_bprm_check, err := link.AttachLSM(link.LSMOptions{Program: objs.BprmCheck})
 	defer lsm_bprm_check.Close()
 	log.Println("lsm_bprm_check Attached!")
-	
+
 	lsm_ptrace_check, err := link.AttachLSM(link.LSMOptions{Program: objs.PtraceCheck})
 	defer lsm_ptrace_check.Close()
 	log.Println("lsm_ptrace_check Attached!")
@@ -254,6 +260,7 @@ func main() {
 		log.Fatalf("opening ringbuf reader: %s", err)
 	}
 	defer rd.Close()
+	go consoleCommands()
 	Daemon()
 	// containerdDaemon()
 
@@ -268,7 +275,7 @@ func main() {
 			log.Fatalf("Error loading policy_map: %v", err)
 		}
 		defer policy_map.Close()
-		
+
 		lsm_to_syscall, err := ebpf.LoadPinnedMap("/sys/fs/bpf/daemon_map/lsm_to_syscall", nil)
 		if err != nil || lsm_to_syscall == nil {
 			log.Fatalf("Error loading pid_lsm_syscall_map: %v", err)
@@ -449,7 +456,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("could not delete element : %s", err)
 		}
-		
+
 		os.Exit(0)
 	}()
 
