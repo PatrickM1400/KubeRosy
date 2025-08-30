@@ -322,21 +322,21 @@ int rtp_sys_enter(struct bpf_raw_tracepoint_args *ctx){
     u64 mntns = getMntInum(task);
     ns.pidns = pidns;
     ns.mountns = mntns;
-    bpf_printk("namespace is pidns %u", pidns);
-    bpf_printk("namespace is mntns %u", mntns);
+    // bpf_printk("namespace is pidns %u", pidns);
+    // bpf_printk("namespace is mntns %u", mntns);
     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    bpf_printk("Within sys_enter 1");
+    // bpf_printk("Within sys_enter 1");
     if(!is_container_process)
         return 0;
     // bpf_tail_call(ctx, &prog_array, SYS_ENTER_TAIL);
     u64 id = ctx->args[1];
     set_syscall_map(pidns, mntns, 0, id);
-    bpf_printk("Within sys_enter 2");
+    // bpf_printk("Within sys_enter 2");
     return 0;
 }
 
-SEC("kprobe/sys_write_entry")
-int BPF_KPROBE(temp_write_callback, unsigned int fd, const char *buf, size_t count)
+SEC("kprobe/sys_read_entry")
+int BPF_KPROBE(sys_read_callback, unsigned int fd, const char *buf, size_t count)
 {
     u32 pid = bpf_get_current_pid_tgid() >> 32;
     u8 comm[16] = {0};
@@ -353,9 +353,2191 @@ int BPF_KPROBE(temp_write_callback, unsigned int fd, const char *buf, size_t cou
     if(!is_container_process)
         return 0;
 
-    bpf_printk("Write syscall 2 triggered for fd %u", fd);
+    bpf_printk("Read syscall triggered for fd %u", fd);
     return 0;
 }
+
+SEC("kprobe/sys_write_entry")
+int BPF_KPROBE(sys_write_callback, unsigned int fd, const char *buf, size_t count)
+{
+    u32 pid = bpf_get_current_pid_tgid() >> 32;
+    u8 comm[16] = {0};
+    bpf_get_current_comm(comm, 16);
+    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+    if(!task)
+        return 0;
+    struct pid_mount_ns ns;
+    u32 pidns = getPidInum(task);
+    u32 mntns = getMntInum(task);
+    ns.pidns = pidns;
+    ns.mountns = mntns;
+    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+    if(!is_container_process)
+        return 0;
+
+    bpf_printk("Write syscall triggered for fd %u", fd);
+    return 0;
+}
+
+SEC("kprobe/sys_open_entry")
+int BPF_KPROBE(sys_open_callback, unsigned int fd, const char *buf, size_t count)
+{
+    u32 pid = bpf_get_current_pid_tgid() >> 32;
+    u8 comm[16] = {0};
+    bpf_get_current_comm(comm, 16);
+    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+    if(!task)
+        return 0;
+    struct pid_mount_ns ns;
+    u32 pidns = getPidInum(task);
+    u32 mntns = getMntInum(task);
+    ns.pidns = pidns;
+    ns.mountns = mntns;
+    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+    if(!is_container_process)
+        return 0;
+
+    bpf_printk("Open syscall triggered for fd %u", fd);
+    return 0;
+}
+
+SEC("kprobe/sys_close_entry")
+int BPF_KPROBE(sys_close_callback, unsigned int fd, const char *buf, size_t count)
+{
+    u32 pid = bpf_get_current_pid_tgid() >> 32;
+    u8 comm[16] = {0};
+    bpf_get_current_comm(comm, 16);
+    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+    if(!task)
+        return 0;
+    struct pid_mount_ns ns;
+    u32 pidns = getPidInum(task);
+    u32 mntns = getMntInum(task);
+    ns.pidns = pidns;
+    ns.mountns = mntns;
+    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+    if(!is_container_process)
+        return 0;
+
+    bpf_printk("close syscall triggered for fd %u", fd);
+    return 0;
+}
+
+SEC("kprobe/sys_mmap_entry")
+int BPF_KPROBE(sys_mmap_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mmap syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_mprotect_entry")
+int BPF_KPROBE(sys_mprotect_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mprotect syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_pread64_entry")
+int BPF_KPROBE(sys_pread64_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("pread64 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_pwrite64_entry")
+int BPF_KPROBE(sys_pwrite64_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("pwrite64 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_readv_entry")
+int BPF_KPROBE(sys_readv_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("readv syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_writev_entry")
+int BPF_KPROBE(sys_writev_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("writev syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_shmat_entry")
+int BPF_KPROBE(sys_shmat_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("shmat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_sendfile_entry")
+int BPF_KPROBE(sys_sendfile_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sendfile syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_socket_entry")
+int BPF_KPROBE(sys_socket_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("socket syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_connect_entry")
+int BPF_KPROBE(sys_connect_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("connect syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_accept_entry")
+int BPF_KPROBE(sys_accept_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("accept syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_sendto_entry")
+int BPF_KPROBE(sys_sendto_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sendto syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_recvfrom_entry")
+int BPF_KPROBE(sys_recvfrom_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("recvfrom syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_sendmsg_entry")
+int BPF_KPROBE(sys_sendmsg_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sendmsg syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_recvmsg_entry")
+int BPF_KPROBE(sys_recvmsg_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("recvmsg syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_shutdown_entry")
+int BPF_KPROBE(sys_shutdown_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("shutdown syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_bind_entry")
+int BPF_KPROBE(sys_bind_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("bind syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_listen_entry")
+int BPF_KPROBE(sys_listen_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("listen syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_getpeername_entry")
+int BPF_KPROBE(sys_getpeername_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getpeername syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_socketpair_entry")
+int BPF_KPROBE(sys_socketpair_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("socketpair syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_setsockopt_entry")
+int BPF_KPROBE(sys_setsockopt_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setsockopt syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_clone_entry")
+int BPF_KPROBE(sys_clone_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("clone syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_fork_entry")
+int BPF_KPROBE(sys_fork_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fork syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_vfork_entry")
+int BPF_KPROBE(sys_vfork_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("vfork syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_execve_entry")
+int BPF_KPROBE(sys_execve_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("execve syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_fcntl_entry")
+int BPF_KPROBE(sys_fcntl_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fcntl syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_ftruncate_entry")
+int BPF_KPROBE(sys_ftruncate_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("ftruncate syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_rename_entry")
+int BPF_KPROBE(sys_rename_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("rename syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_mkdir_entry")
+int BPF_KPROBE(sys_mkdir_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mkdir syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_rmdir_entry")
+int BPF_KPROBE(sys_rmdir_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("rmdir syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_creat_entry")
+int BPF_KPROBE(sys_creat_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("creat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_link_entry")
+int BPF_KPROBE(sys_link_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("link syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_unlink_entry")
+int BPF_KPROBE(sys_unlink_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("unlink syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_symlink_entry")
+int BPF_KPROBE(sys_symlink_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("symlink syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_chmod_entry")
+int BPF_KPROBE(sys_chmod_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("chmod syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_fchmod_entry")
+int BPF_KPROBE(sys_fchmod_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fchmod syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_chown_entry")
+int BPF_KPROBE(sys_chown_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("chown syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_fchown_entry")
+int BPF_KPROBE(sys_fchown_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fchown syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_lchown_entry")
+int BPF_KPROBE(sys_lchown_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("lchown syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_ptrace_entry")
+int BPF_KPROBE(sys_ptrace_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("ptrace syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_syslog_entry")
+int BPF_KPROBE(sys_syslog_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("syslog syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_setuid_entry")
+int BPF_KPROBE(sys_setuid_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setuid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_setgid_entry")
+int BPF_KPROBE(sys_setgid_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setgid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_setpgid_entry")
+int BPF_KPROBE(sys_setpgid_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setpgid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_getpgrp_entry")
+int BPF_KPROBE(sys_getpgrp_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getpgrp syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_setreuid_entry")
+int BPF_KPROBE(sys_setreuid_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setreuid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_setregid_entry")
+int BPF_KPROBE(sys_setregid_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setregid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_setgroups_entry")
+int BPF_KPROBE(sys_setgroups_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setgroups syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_setresuid_entry")
+int BPF_KPROBE(sys_setresuid_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setresuid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_setresgid_entry")
+int BPF_KPROBE(sys_setresgid_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setresgid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_getsid_entry")
+int BPF_KPROBE(sys_getsid_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getsid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_capget_entry")
+int BPF_KPROBE(sys_capget_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("capget syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_capset_entry")
+int BPF_KPROBE(sys_capset_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("capset syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_mknod_entry")
+int BPF_KPROBE(sys_mknod_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mknod syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_uselib_entry")
+int BPF_KPROBE(sys_uselib_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("uselib syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_ustat_entry")
+int BPF_KPROBE(sys_ustat_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("ustat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_statfs_entry")
+int BPF_KPROBE(sys_statfs_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("statfs syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_fstatfs_entry")
+int BPF_KPROBE(sys_fstatfs_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fstatfs syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_pivot_root_entry")
+int BPF_KPROBE(sys_pivot_root_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("pivot_root syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_chroot_entry")
+int BPF_KPROBE(sys_chroot_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("chroot syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_settimeofday_entry")
+int BPF_KPROBE(sys_settimeofday_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("settimeofday syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_swapon_entry")
+int BPF_KPROBE(sys_swapon_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("swapon syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_swapoff_entry")
+int BPF_KPROBE(sys_swapoff_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("swapoff syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_acct_entry")
+int BPF_KPROBE(sys_acct_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("acct syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_quotactl_entry")
+int BPF_KPROBE(sys_quotactl_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("quotactl syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_io_setup_entry")
+int BPF_KPROBE(sys_io_setup_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("io_setup syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_remap_file_pages_entry")
+int BPF_KPROBE(sys_remap_file_pages_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("remap_file_pages syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_clock_settime_entry")
+int BPF_KPROBE(sys_clock_settime_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("clock_settime syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_inotify_add_watch_entry")
+int BPF_KPROBE(sys_inotify_add_watch_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("inotify_add_watch syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_openat_entry")
+int BPF_KPROBE(sys_openat_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("openat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_mkdirat_entry")
+int BPF_KPROBE(sys_mkdirat_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mkdirat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_fchownat_entry")
+int BPF_KPROBE(sys_fchownat_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fchownat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_renameat_entry")
+int BPF_KPROBE(sys_renameat_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("renameat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_linkat_entry")
+int BPF_KPROBE(sys_linkat_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("linkat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_symlinkat_entry")
+int BPF_KPROBE(sys_symlinkat_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("symlinkat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_fchmodat_entry")
+int BPF_KPROBE(sys_fchmodat_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fchmodat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_unshare_entry")
+int BPF_KPROBE(sys_unshare_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("unshare syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_fallocate_entry")
+int BPF_KPROBE(sys_fallocate_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fallocate syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_accept4_entry")
+int BPF_KPROBE(sys_accept4_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("accept4 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_preadv_entry")
+int BPF_KPROBE(sys_preadv_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("preadv syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_pwritev_entry")
+int BPF_KPROBE(sys_pwritev_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("pwritev syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_recvmmsg_entry")
+int BPF_KPROBE(sys_recvmmsg_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("recvmmsg syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_fanotify_mark_entry")
+int BPF_KPROBE(sys_fanotify_mark_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fanotify_mark syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_open_by_handle_at_entry")
+int BPF_KPROBE(sys_open_by_handle_at_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("open_by_handle_at syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_sendmmsg_entry")
+int BPF_KPROBE(sys_sendmmsg_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sendmmsg syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_setns_entry")
+int BPF_KPROBE(sys_setns_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setns syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_renameat2_entry")
+int BPF_KPROBE(sys_renameat2_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("renameat2 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_execveat_entry")
+int BPF_KPROBE(sys_execveat_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("execveat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_copy_file_range_entry")
+int BPF_KPROBE(sys_copy_file_range_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("copy_file_range syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_preadv2_entry")
+int BPF_KPROBE(sys_preadv2_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("preadv2 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_pwritev2_entry")
+int BPF_KPROBE(sys_pwritev2_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("pwritev2 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_pkey_mprotect_entry")
+int BPF_KPROBE(sys_pkey_mprotect_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("pkey_mprotect syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_io_uring_setup_entry")
+int BPF_KPROBE(sys_io_uring_setup_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("io_uring_setup syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_move_mount_entry")
+int BPF_KPROBE(sys_move_mount_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("move_mount syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_fsconfig_entry")
+int BPF_KPROBE(sys_fsconfig_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fsconfig syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("kprobe/sys_fsmount_entry")
+int BPF_KPROBE(sys_fsmount_callback)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fsmount syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+
+
+/*mmap*/
+/*mprotect*/
+/*pread64*/
+/*pwrite64*/
+/*readv*/
+/*writev*/
+/*shmat*/
+/*sendfile*/
+/*socket*/
+/*connect*/
+/*accept*/
+/*sendto*/
+/*recvfrom*/
+/*sendmsg*/
+/*recvmsg*/
+/*shutdown*/
+/*bind*/
+/*listen*/
+/*getpeername*/
+/*socketpair*/
+/*setsockopt*/
+/*clone*/
+/*fork*/
+/*vfork*/
+/*execve*/
+/*fcntl*/
+/*ftruncate*/
+/*rename*/
+/*mkdir*/
+/*rmdir*/
+/*creat*/
+/*link*/
+/*unlink*/
+/*symlink*/
+/*chmod*/
+/*fchmod*/
+/*chown*/
+/*fchown*/
+/*lchown*/
+/*ptrace*/
+/*syslog*/
+/*setuid*/
+/*setgid*/
+/*setpgid*/
+/*getpgrp*/
+/*setreuid*/
+/*setregid*/
+/*setgroups*/
+/*setresuid*/
+/*setresgid*/
+/*getsid*/
+/*capget*/
+/*capset*/
+/*mknod*/
+/*uselib*/
+/*ustat*/
+/*statfs*/
+/*fstatfs*/
+/*pivot_root*/
+/*chroot*/
+/*settimeofday*/
+/*swapon*/
+/*swapoff*/
+/*acct*/
+/*quotactl*/
+/*io_setup*/
+/*remap_file_pages*/
+/*clock_settime*/
+/*inotify_add_watch*/
+/*openat*/
+/*mkdirat*/
+/*fchownat*/
+/*renameat*/
+/*linkat*/
+/*symlinkat*/
+/*fchmodat*/
+/*unshare*/
+/*fallocate*/
+/*accept4*/
+/*preadv*/
+/*pwritev*/
+/*recvmmsg*/
+/*fanotify_mark*/
+/*open_by_handle_at*/
+/*sendmmsg*/
+/*setns*/
+/*renameat2*/
+/*execveat*/
+/*copy_file_range*/
+/*preadv2*/
+/*pwritev2*/
+/*pkey_mprotect*/
+/*io_uring_setup*/
+/*move_mount*/
+/*fsconfig*/
+/*fsmount*/
+
 
 
 
@@ -376,2138 +2558,2138 @@ int BPF_KPROBE(temp_write_callback, unsigned int fd, const char *buf, size_t cou
         sock_create
 */
 
-SEC("lsm/file_permission")
-int BPF_PROG(file_permission, struct file *file, int mask){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, FILE_PERMISSION); //For each name space there is only one syscall associated with it?
+// SEC("lsm/file_permission")
+// int BPF_PROG(file_permission, struct file *file, int mask){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, FILE_PERMISSION); //For each name space there is only one syscall associated with it?
     
-    u32 init_failed = set_syscall_map(pidns, mntns, FILE_PERMISSION, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, FILE_PERMISSION, 0);
+//     if(init_failed)
+//         return 0;
 
-    bpf_printk("file_permission triggered with syscall number %d and comm %s", syscall, comm);
+//     bpf_printk("file_permission triggered with syscall number %d and comm %s", syscall, comm);
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        bpf_printk("file_permission triggered! policy allowed");
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         bpf_printk("file_permission triggered! policy allowed");
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
-SEC("lsm/task_alloc")
-int BPF_PROG(task_alloc, struct task_struct *task, unsigned long clone_flags, int ret){
-    if (ret != 0)
-        return ret;
+// SEC("lsm/task_alloc")
+// int BPF_PROG(task_alloc, struct task_struct *task, unsigned long clone_flags, int ret){
+//     if (ret != 0)
+//         return ret;
 
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *process_task = (struct task_struct*)bpf_get_current_task();
-    if(!process_task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(process_task);
-    u32 mntns = getMntInum(process_task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, TASK_ALLOC);
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *process_task = (struct task_struct*)bpf_get_current_task();
+//     if(!process_task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(process_task);
+//     u32 mntns = getMntInum(process_task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, TASK_ALLOC);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, TASK_ALLOC, 0);
-    if(init_failed)
-        return 0;
-    bpf_printk("task_alloc LSM Hook triggered! clone_flags = %u", clone_flags);
+//     u32 init_failed = set_syscall_map(pidns, mntns, TASK_ALLOC, 0);
+//     if(init_failed)
+//         return 0;
+//     bpf_printk("task_alloc LSM Hook triggered! clone_flags = %u", clone_flags);
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        bpf_printk("task_alloc triggered! policy allowed");
-        return 0;
-    }
-    bpf_printk("task_alloc triggered! policy blocked");
-    struct pid_syscall_args key;
-    key.syscall = syscall;
-    key.namespace = ns;
-    u32 *flag = bpf_map_lookup_elem(&policy_params_task_alloc, &key);
-    if(flag){
-        for(int i = 0; i < 16; i++){
-            if(flag[i] == 0)
-                break;
-            if(flag[i] == clone_flags){
-                return 0;
-            }
-        }
-    }
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         bpf_printk("task_alloc triggered! policy allowed");
+//         return 0;
+//     }
+//     bpf_printk("task_alloc triggered! policy blocked");
+//     struct pid_syscall_args key;
+//     key.syscall = syscall;
+//     key.namespace = ns;
+//     u32 *flag = bpf_map_lookup_elem(&policy_params_task_alloc, &key);
+//     if(flag){
+//         for(int i = 0; i < 16; i++){
+//             if(flag[i] == 0)
+//                 break;
+//             if(flag[i] == clone_flags){
+//                 return 0;
+//             }
+//         }
+//     }
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
 
-    return -EPERM;
-}
+//     return -EPERM;
+// }
 
-SEC("lsm/bprm_check_security")
-int BPF_PROG(bprm_check, struct linux_binprm *bprm, int ret){
-    if (ret != 0)
-        return ret;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, BPRM_CHECK_SECURITY);
+// SEC("lsm/bprm_check_security")
+// int BPF_PROG(bprm_check, struct linux_binprm *bprm, int ret){
+//     if (ret != 0)
+//         return ret;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, BPRM_CHECK_SECURITY);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, BPRM_CHECK_SECURITY, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, BPRM_CHECK_SECURITY, 0);
+//     if(init_failed)
+//         return 0;
     
-    u8 filename[MAX_PATH_LEN];
-    bpf_core_read_str(&filename, sizeof(filename), bprm->filename);
-    bpf_printk("bprm_check_security LSM Hook triggered! filename = %s", filename);
+//     u8 filename[MAX_PATH_LEN];
+//     bpf_core_read_str(&filename, sizeof(filename), bprm->filename);
+//     bpf_printk("bprm_check_security LSM Hook triggered! filename = %s", filename);
 
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy)
-        return 0;
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy)
+//         return 0;
     
-    struct pid_syscall_args key;
-    key.syscall = syscall;
-    key.namespace = ns;
-    // bool is_empty = false;
-    u32 is_allowed = 1;
-    char *filepath = bpf_map_lookup_elem(&policy_params_bprm_check, &key);
-    if(filepath){
-        for(int i = 0; i < 16; i++){
-            if(filepath[i * MAX_PATH_LEN] != '/')
-                break;
-            is_allowed = 1;
-            for(int j = 0; j < MAX_PATH_LEN; j++){
-                // if(!filepath || !(bprm->filename)){
-                //     if(!j)
-                //         is_empty = true;
-                //     break;
-                // }
-                if(filepath[i * MAX_PATH_LEN + j] == '\0'){
-                    is_allowed = 0;
-                    // if(!j)
-                    //     is_empty = true;
-                    break;
-                }
-                if(filename[j] == '\0'){
-                    // if(!j)
-                    //     is_empty = true;
-                    // is_allowed = 0;
-                    break;
-                }
-                if(filepath[i * MAX_PATH_LEN + j] != filename[j]){
-                    is_allowed = 0;
-                    break;
-                }
-            }
-            if(is_allowed)
-                return 0;
-        }
-    }
+//     struct pid_syscall_args key;
+//     key.syscall = syscall;
+//     key.namespace = ns;
+//     // bool is_empty = false;
+//     u32 is_allowed = 1;
+//     char *filepath = bpf_map_lookup_elem(&policy_params_bprm_check, &key);
+//     if(filepath){
+//         for(int i = 0; i < 16; i++){
+//             if(filepath[i * MAX_PATH_LEN] != '/')
+//                 break;
+//             is_allowed = 1;
+//             for(int j = 0; j < MAX_PATH_LEN; j++){
+//                 // if(!filepath || !(bprm->filename)){
+//                 //     if(!j)
+//                 //         is_empty = true;
+//                 //     break;
+//                 // }
+//                 if(filepath[i * MAX_PATH_LEN + j] == '\0'){
+//                     is_allowed = 0;
+//                     // if(!j)
+//                     //     is_empty = true;
+//                     break;
+//                 }
+//                 if(filename[j] == '\0'){
+//                     // if(!j)
+//                     //     is_empty = true;
+//                     // is_allowed = 0;
+//                     break;
+//                 }
+//                 if(filepath[i * MAX_PATH_LEN + j] != filename[j]){
+//                     is_allowed = 0;
+//                     break;
+//                 }
+//             }
+//             if(is_allowed)
+//                 return 0;
+//         }
+//     }
         
     
     
-    if (is_allowed) {
-        u32 pid = bpf_get_current_pid_tgid() >> 32;
-        bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
+//     if (is_allowed) {
+//         u32 pid = bpf_get_current_pid_tgid() >> 32;
+//         bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
         
-        struct event *new_event = NULL;
-        new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-        if (new_event == NULL) {
-            return 0;
-        }
-        new_event->pid = pid;
-        for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-        bpf_ringbuf_submit(new_event, 0);
+//         struct event *new_event = NULL;
+//         new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//         if (new_event == NULL) {
+//             return 0;
+//         }
+//         new_event->pid = pid;
+//         for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//         bpf_ringbuf_submit(new_event, 0);
 
-        return -EPERM;
-    }
+//         return -EPERM;
+//     }
     
-    return 0;
-}
+//     return 0;
+// }
 
-SEC("lsm/ptrace_access_check")
-int BPF_PROG(ptrace_check, struct task_struct *child, unsigned int mode, int ret){
-    if (ret != 0)
-        return ret;
+// SEC("lsm/ptrace_access_check")
+// int BPF_PROG(ptrace_check, struct task_struct *child, unsigned int mode, int ret){
+//     if (ret != 0)
+//         return ret;
 
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, PTRACE_ACCESS_CHECK);
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, PTRACE_ACCESS_CHECK);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, PTRACE_ACCESS_CHECK, 0);
-    if(init_failed)
-        return 0;
-    bpf_printk("ptrace_access_check LSM Hook triggered! mode = %u", mode);
+//     u32 init_failed = set_syscall_map(pidns, mntns, PTRACE_ACCESS_CHECK, 0);
+//     if(init_failed)
+//         return 0;
+//     bpf_printk("ptrace_access_check LSM Hook triggered! mode = %u", mode);
 
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy)
-        return 0;
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy)
+//         return 0;
 
-    struct pid_syscall_args key;
-    key.syscall = syscall;
-    key.namespace = ns;
-    u8 *allow_policy = bpf_map_lookup_elem(&policy_params_ptrace_access, &key);
-    if(allow_policy && mode){
-        for(int i = 0; i < 16; i++){
-            if(allow_policy[i] == 0)
-                break;
-            if((allow_policy[i] & mode) == mode){
-                return 0;
-            }
-        }
-    }
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-    // Create event, we are going to send this over to userspace.
+//     struct pid_syscall_args key;
+//     key.syscall = syscall;
+//     key.namespace = ns;
+//     u8 *allow_policy = bpf_map_lookup_elem(&policy_params_ptrace_access, &key);
+//     if(allow_policy && mode){
+//         for(int i = 0; i < 16; i++){
+//             if(allow_policy[i] == 0)
+//                 break;
+//             if((allow_policy[i] & mode) == mode){
+//                 return 0;
+//             }
+//         }
+//     }
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
+//     // Create event, we are going to send this over to userspace.
     
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
 
-    return -EPERM;
+//     return -EPERM;
     
-    return 0;
-}
+//     return 0;
+// }
 
-SEC("lsm/path_chmod")
-int BPF_PROG(path_chmod, struct path *path, umode_t mode, int ret){
-    if (ret != 0)
-        return ret;
+// SEC("lsm/path_chmod")
+// int BPF_PROG(path_chmod, struct path *path, umode_t mode, int ret){
+//     if (ret != 0)
+//         return ret;
 
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    bpf_printk("path_chmod triggered! in container process");
-    if(*is_container_process){
-        u32 syscall = lookup_syscall(ns, PATH_CHMOD);
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     bpf_printk("path_chmod triggered! in container process");
+//     if(*is_container_process){
+//         u32 syscall = lookup_syscall(ns, PATH_CHMOD);
         
-        u32 init_failed = set_syscall_map(pidns, mntns, PATH_CHMOD, 0);
-        if(init_failed)
-            return 0;
-        struct pid_syscall_args key;
-        key.syscall = syscall;
-        key.namespace = ns;
-        bpf_printk("path_chmod #1");
-        ///
-        u8 global_path_buf[MAX_PATH_LEN];
+//         u32 init_failed = set_syscall_map(pidns, mntns, PATH_CHMOD, 0);
+//         if(init_failed)
+//             return 0;
+//         struct pid_syscall_args key;
+//         key.syscall = syscall;
+//         key.namespace = ns;
+//         bpf_printk("path_chmod #1");
+//         ///
+//         u8 global_path_buf[MAX_PATH_LEN];
 
-        struct dentry *d = path->dentry;
-        int top = 0;
-        if(!d)
-            return 0;
-        // Reset global buffer
-        for (int i = 0; i < MAX_PATH_LEN; i++)
-            global_path_buf[i] = '\0';
-        bpf_printk("path_chmod #2");
+//         struct dentry *d = path->dentry;
+//         int top = 0;
+//         if(!d)
+//             return 0;
+//         // Reset global buffer
+//         for (int i = 0; i < MAX_PATH_LEN; i++)
+//             global_path_buf[i] = '\0';
+//         bpf_printk("path_chmod #2");
 
-        for(int j = 0; j < 10; j++) {
-            if(d == d->d_parent || top >= MAX_PATH_LEN - 1 || !d)
-                break;
+//         for(int j = 0; j < 10; j++) {
+//             if(d == d->d_parent || top >= MAX_PATH_LEN - 1 || !d)
+//                 break;
             
-            u8 name_tmp[MAX_PATH_LEN];
-            bpf_core_read_str(&name_tmp, sizeof(name_tmp), d->d_name.name);
-            int len = 0;
-            while (name_tmp[len] != '\0' && len < MAX_PATH_LEN - 2) {
-                len++;
-            }
-            if(len < 1)
-                return 0;
-            bpf_printk("path_chmod #2-1 d_name.name : %s", name_tmp);
-            for (int i = len - 1; i >= 0 && top < MAX_PATH_LEN - 2; i--) {
-                global_path_buf[top++] = name_tmp[i];
-            }
-            if (top < MAX_PATH_LEN - 1) {
-                global_path_buf[top++] = '/';
-            }
-            d = d->d_parent;
-        }
+//             u8 name_tmp[MAX_PATH_LEN];
+//             bpf_core_read_str(&name_tmp, sizeof(name_tmp), d->d_name.name);
+//             int len = 0;
+//             while (name_tmp[len] != '\0' && len < MAX_PATH_LEN - 2) {
+//                 len++;
+//             }
+//             if(len < 1)
+//                 return 0;
+//             bpf_printk("path_chmod #2-1 d_name.name : %s", name_tmp);
+//             for (int i = len - 1; i >= 0 && top < MAX_PATH_LEN - 2; i--) {
+//                 global_path_buf[top++] = name_tmp[i];
+//             }
+//             if (top < MAX_PATH_LEN - 1) {
+//                 global_path_buf[top++] = '/';
+//             }
+//             d = d->d_parent;
+//         }
 
-        bpf_printk("path_chmod #3");
-        // Reverse the whole path
-        for (int i = 0; i < top / 2; i++) {
-            u8 temp = global_path_buf[i];
-            global_path_buf[i] = global_path_buf[top - 1 - i];
-            global_path_buf[top - 1 - i] = temp;
-        }
-        ///
-        bpf_printk("path_chmod #3-1 global_path_buf : %s", global_path_buf);
+//         bpf_printk("path_chmod #3");
+//         // Reverse the whole path
+//         for (int i = 0; i < top / 2; i++) {
+//             u8 temp = global_path_buf[i];
+//             global_path_buf[i] = global_path_buf[top - 1 - i];
+//             global_path_buf[top - 1 - i] = temp;
+//         }
+//         ///
+//         bpf_printk("path_chmod #3-1 global_path_buf : %s", global_path_buf);
 
-        u32 policy = lookup_policy(pidns, mntns, syscall);
-        if(!policy){
-            bpf_printk("path_chmod triggered! policy allowed");
-            return 0;
-        }
-        char *chmod_allow = bpf_map_lookup_elem(&policy_params_path_chmod, &key);
-        if(chmod_allow){
-            int is_allowed = 1;
-            for(int i = 0; i < 16; i++){
-                if(chmod_allow[i * (MAX_PATH_LEN + 2)] != '/')
-                    break;
-                is_allowed = 1;
-                u16 policy_mode = (((u16)(chmod_allow[i * (MAX_PATH_LEN + 2) + 16]) & 0x00FF) << 8) | ((u16)(chmod_allow[i * (MAX_PATH_LEN + 2) + 17]) & 0x00FF);
-                bpf_printk("policy_mode : %d", policy_mode);
-                for(int j = 0; j < MAX_PATH_LEN; j++){
-                    if(chmod_allow[i * (MAX_PATH_LEN + 2) + j] == '\0')
-                        is_allowed = 0;
-                        break;
-                    if(global_path_buf[j] == '\0'){
-                        break;
-                    }
-                    if(chmod_allow[i * (MAX_PATH_LEN + 2) + j] != global_path_buf[j]){
-                        is_allowed = 0;
-                        break;
-                    }
-                }
-                if(is_allowed){
-                    if(policy_mode == mode)
-                        return 0;
-                    if(policy_mode == 65535)
-                        return 0;
-                }
-            }
-        }
+//         u32 policy = lookup_policy(pidns, mntns, syscall);
+//         if(!policy){
+//             bpf_printk("path_chmod triggered! policy allowed");
+//             return 0;
+//         }
+//         char *chmod_allow = bpf_map_lookup_elem(&policy_params_path_chmod, &key);
+//         if(chmod_allow){
+//             int is_allowed = 1;
+//             for(int i = 0; i < 16; i++){
+//                 if(chmod_allow[i * (MAX_PATH_LEN + 2)] != '/')
+//                     break;
+//                 is_allowed = 1;
+//                 u16 policy_mode = (((u16)(chmod_allow[i * (MAX_PATH_LEN + 2) + 16]) & 0x00FF) << 8) | ((u16)(chmod_allow[i * (MAX_PATH_LEN + 2) + 17]) & 0x00FF);
+//                 bpf_printk("policy_mode : %d", policy_mode);
+//                 for(int j = 0; j < MAX_PATH_LEN; j++){
+//                     if(chmod_allow[i * (MAX_PATH_LEN + 2) + j] == '\0')
+//                         is_allowed = 0;
+//                         break;
+//                     if(global_path_buf[j] == '\0'){
+//                         break;
+//                     }
+//                     if(chmod_allow[i * (MAX_PATH_LEN + 2) + j] != global_path_buf[j]){
+//                         is_allowed = 0;
+//                         break;
+//                     }
+//                 }
+//                 if(is_allowed){
+//                     if(policy_mode == mode)
+//                         return 0;
+//                     if(policy_mode == 65535)
+//                         return 0;
+//                 }
+//             }
+//         }
 
-        ///
-        u32 pid = bpf_get_current_pid_tgid() >> 32;
-        bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-        // Create event, we are going to send this over to userspace.
+//         ///
+//         u32 pid = bpf_get_current_pid_tgid() >> 32;
+//         bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
+//         // Create event, we are going to send this over to userspace.
         
-        struct event *new_event = NULL;
-        new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-        if (new_event == NULL) {
-            return 0;
-        }
-        new_event->pid = pid;
-        for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-        bpf_ringbuf_submit(new_event, 0);
+//         struct event *new_event = NULL;
+//         new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//         if (new_event == NULL) {
+//             return 0;
+//         }
+//         new_event->pid = pid;
+//         for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//         bpf_ringbuf_submit(new_event, 0);
 
-        return -EPERM;
-    }
-    return 0;
-}
+//         return -EPERM;
+//     }
+//     return 0;
+// }
 
-SEC("lsm/file_mprotect")
-int BPF_PROG(file_mprotect, struct vm_area_struct *vma, unsigned long reqprot, unsigned long prot, int ret){
-    if (ret != 0)
-        return ret;
+// SEC("lsm/file_mprotect")
+// int BPF_PROG(file_mprotect, struct vm_area_struct *vma, unsigned long reqprot, unsigned long prot, int ret){
+//     if (ret != 0)
+//         return ret;
 
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
     
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, FILE_MPROTECT);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, FILE_MPROTECT);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, FILE_MPROTECT, 0);
-    if(init_failed)
-        return 0;
-    bpf_printk("file_mprotect LSM Hook triggered! prot = %u, reqprot = %u", prot, reqprot);
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, FILE_MPROTECT, 0);
+//     if(init_failed)
+//         return 0;
+//     bpf_printk("file_mprotect LSM Hook triggered! prot = %u, reqprot = %u", prot, reqprot);
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy)
+//         return 0;
     
-    struct pid_syscall_args psa;
-    psa.syscall = syscall;
-    psa.namespace = ns;
-    u32 *arr = bpf_map_lookup_elem(&policy_params_file_mprotect, &psa);
-    if(!arr){
-        for(int i = 0; i < 8; i++){
-            if(!arr[i*2] && !arr[i*2 + 1])
-                break;
-            if(arr[i*2] == 0xFFFFFFFF){
-                if(arr[i*2 + 1] == 0xFFFFFFFF){
-                    return 0;
-                }
-                else if(arr[i*2 + 1] == prot){
-                    return 0;
-                }
-            }
-            else if(arr[i*2 + 1] == 0xFFFFFFFF){
-                if(arr[i*2] == reqprot){
-                    return 0;
-                }
-            }
-            else if(arr[i*2] == reqprot && arr[i*2 + 1] == prot){
-                return 0;
-            }
-        }
-    }
-    
-
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-    // Create event, we are going to send this over to userspace.
-    
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-
-    return -EPERM;
-}
-
-SEC("lsm/task_fix_setgid")
-int BPF_PROG(fix_setgid, struct cred *new, const struct cred *old, int flags, int ret){
-    if (ret != 0)
-        return ret;
-
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, TASK_FIX_SETGID);
-    
-    u32 init_failed = set_syscall_map(pidns, mntns, TASK_FIX_SETGID, 0);
-    if(init_failed)
-        return 0;
-    bpf_printk("task_fix_setgid LSM Hook triggered! uid = %u, euid = %u, suid = %u", new->gid.val, new->egid.val, new->sgid.val);
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy)
-        return 0;
-    struct pid_syscall_args psa;
-    psa.syscall = syscall;
-    psa.namespace = ns;
-
-    u32 *arr = bpf_map_lookup_elem(&policy_params_fix_setgid, &psa);
-    if(arr){
-        for(int i = 0; i < 8; i++){
-            if(arr[i*3 + 2] == 0xFFFFFFFF){
-                if(arr[i*3 + 1] == 0xFFFFFFFF){
-                    if(arr[i*3] == 0xFFFFFFFF){
-                        return 0;
-                    }
-                    else if(arr[i*3] == new->gid.val){
-                        return 0;
-                    }
-                }
-                else if(arr[i*3 + 1] == new->egid.val){
-                    if(arr[i*3] == 0xFFFFFFFF){
-                        return 0;
-                    }
-                    else if(arr[i*3] == new->gid.val){
-                        return 0;
-                    }
-                }
-            }
-            else if(arr[i*3 + 2] == new->sgid.val){
-                if(arr[i*3 + 1] == 0xFFFFFFFF){
-                    if(arr[i*3] == 0xFFFFFFFF){
-                        return 0;
-                    }
-                    else if(arr[i*3] == new->gid.val){
-                        return 0;
-                    }
-                }
-                else if(arr[i*3 + 1] == new->egid.val){
-                    if(arr[i*3] == 0xFFFFFFFF){
-                        return 0;
-                    }
-                    else if(arr[i*3] == new->gid.val){
-                        return 0;
-                    }
-                }
-            }
-        }
-    }
+//     struct pid_syscall_args psa;
+//     psa.syscall = syscall;
+//     psa.namespace = ns;
+//     u32 *arr = bpf_map_lookup_elem(&policy_params_file_mprotect, &psa);
+//     if(!arr){
+//         for(int i = 0; i < 8; i++){
+//             if(!arr[i*2] && !arr[i*2 + 1])
+//                 break;
+//             if(arr[i*2] == 0xFFFFFFFF){
+//                 if(arr[i*2 + 1] == 0xFFFFFFFF){
+//                     return 0;
+//                 }
+//                 else if(arr[i*2 + 1] == prot){
+//                     return 0;
+//                 }
+//             }
+//             else if(arr[i*2 + 1] == 0xFFFFFFFF){
+//                 if(arr[i*2] == reqprot){
+//                     return 0;
+//                 }
+//             }
+//             else if(arr[i*2] == reqprot && arr[i*2 + 1] == prot){
+//                 return 0;
+//             }
+//         }
+//     }
     
 
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-    // Create event, we are going to send this over to userspace.
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
+//     // Create event, we are going to send this over to userspace.
     
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
 
-    return -EPERM;
-}
+//     return -EPERM;
+// }
 
-SEC("lsm/task_fix_setuid")
-int BPF_PROG(fix_setuid, struct cred *new, const struct cred *old, int flags, int ret){
-    if (ret != 0)
-        return ret;
+// SEC("lsm/task_fix_setgid")
+// int BPF_PROG(fix_setgid, struct cred *new, const struct cred *old, int flags, int ret){
+//     if (ret != 0)
+//         return ret;
 
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, TASK_FIX_SETGID);
     
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, TASK_FIX_SETUID);
-    
-    u32 init_failed = set_syscall_map(pidns, mntns, TASK_FIX_SETUID, 0);
-    if(init_failed)
-        return 0;
-    bpf_printk("task_fix_setuid LSM Hook triggered! uid = %u, euid = %u, suid = %u", new->uid.val, new->euid.val, new->suid.val);
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, TASK_FIX_SETGID, 0);
+//     if(init_failed)
+//         return 0;
+//     bpf_printk("task_fix_setgid LSM Hook triggered! uid = %u, euid = %u, suid = %u", new->gid.val, new->egid.val, new->sgid.val);
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy)
+//         return 0;
+//     struct pid_syscall_args psa;
+//     psa.syscall = syscall;
+//     psa.namespace = ns;
 
-    struct pid_syscall_args psa;
-    psa.syscall = syscall;
-    psa.namespace = ns;
-
-    u32 *arr = bpf_map_lookup_elem(&policy_params_fix_setuid, &psa);
-    if(arr){
-        for(int i = 0; i < 8; i++){
-            if(arr[i*3 + 2] == 0xFFFFFFFF){
-                if(arr[i*3 + 1] == 0xFFFFFFFF){
-                    if(arr[i*3] == 0xFFFFFFFF){
-                        return 0;
-                    }
-                    else if(arr[i*3] == new->uid.val){
-                        return 0;
-                    }
-                }
-                else if(arr[i*3 + 1] == new->euid.val){
-                    if(arr[i*3] == 0xFFFFFFFF){
-                        return 0;
-                    }
-                    else if(arr[i*3] == new->uid.val){
-                        return 0;
-                    }
-                }
-            }
-            else if(arr[i*3 + 2] == new->suid.val){
-                if(arr[i*3 + 1] == 0xFFFFFFFF){
-                    if(arr[i*3] == 0xFFFFFFFF){
-                        return 0;
-                    }
-                    else if(arr[i*3] == new->uid.val){
-                        return 0;
-                    }
-                }
-                else if(arr[i*3 + 1] == new->euid.val){
-                    if(arr[i*3] == 0xFFFFFFFF){
-                        return 0;
-                    }
-                    else if(arr[i*3] == new->uid.val){
-                        return 0;
-                    }
-                }
-            }
-        }
-    }
+//     u32 *arr = bpf_map_lookup_elem(&policy_params_fix_setgid, &psa);
+//     if(arr){
+//         for(int i = 0; i < 8; i++){
+//             if(arr[i*3 + 2] == 0xFFFFFFFF){
+//                 if(arr[i*3 + 1] == 0xFFFFFFFF){
+//                     if(arr[i*3] == 0xFFFFFFFF){
+//                         return 0;
+//                     }
+//                     else if(arr[i*3] == new->gid.val){
+//                         return 0;
+//                     }
+//                 }
+//                 else if(arr[i*3 + 1] == new->egid.val){
+//                     if(arr[i*3] == 0xFFFFFFFF){
+//                         return 0;
+//                     }
+//                     else if(arr[i*3] == new->gid.val){
+//                         return 0;
+//                     }
+//                 }
+//             }
+//             else if(arr[i*3 + 2] == new->sgid.val){
+//                 if(arr[i*3 + 1] == 0xFFFFFFFF){
+//                     if(arr[i*3] == 0xFFFFFFFF){
+//                         return 0;
+//                     }
+//                     else if(arr[i*3] == new->gid.val){
+//                         return 0;
+//                     }
+//                 }
+//                 else if(arr[i*3 + 1] == new->egid.val){
+//                     if(arr[i*3] == 0xFFFFFFFF){
+//                         return 0;
+//                     }
+//                     else if(arr[i*3] == new->gid.val){
+//                         return 0;
+//                     }
+//                 }
+//             }
+//         }
+//     }
     
 
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-    // Create event, we are going to send this over to userspace.
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
+//     // Create event, we are going to send this over to userspace.
     
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
 
-    return -EPERM;
-}
+//     return -EPERM;
+// }
 
-SEC("lsm/socket_accept")
-int BPF_PROG(socket_accept, struct socket *sock, struct socket *newsock, int ret){
-    if (ret != 0)
-        return ret;
+// SEC("lsm/task_fix_setuid")
+// int BPF_PROG(fix_setuid, struct cred *new, const struct cred *old, int flags, int ret){
+//     if (ret != 0)
+//         return ret;
 
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, SOCKET_ACCEPT);
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_ACCEPT, 0);
-    if(init_failed)
-        return 0;
-    // u32 policy = lookup_policy(pidns, mntns, syscall);
-    // if(!policy)
-    //     return 0;
-    u32 ip_dest = sock->sk->__sk_common.skc_daddr;
-    u32 port_dest = (u32)(sock->sk->__sk_common.skc_dport);
-    u32 proto_dest = (u32)(sock->sk->sk_protocol);
-    bpf_printk("socket_accept LSM Hook triggered! ip_dest = %u, port_dest = %u", ip_dest, port_dest);
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy)
-        return 0;
-    struct pid_syscall_args psa;
-    psa.syscall = syscall;
-    psa.namespace = ns;
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, TASK_FIX_SETUID);
+    
+//     u32 init_failed = set_syscall_map(pidns, mntns, TASK_FIX_SETUID, 0);
+//     if(init_failed)
+//         return 0;
+//     bpf_printk("task_fix_setuid LSM Hook triggered! uid = %u, euid = %u, suid = %u", new->uid.val, new->euid.val, new->suid.val);
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy)
+//         return 0;
 
-    u32 *arr = bpf_map_lookup_elem(&policy_params_socket_accept, &psa);
-    if(arr){
-        u16 flag = 0;
-        u32 policy_ip, policy_port, policy_proto;
-        for(int i = 0 ; i < 8; i++){
-            if(!arr[i * 3]&& !arr[i * 3 + 1] && !arr[i*3 + 2]){
-                break;
-            }
-            policy_ip = arr[i*3];
-            policy_port = arr[i*3 + 1] & 0x0000FFFF;
-            policy_proto = arr[i*3 + 2];
-            flag = arr[i*3 + 1] >> 16;
+//     struct pid_syscall_args psa;
+//     psa.syscall = syscall;
+//     psa.namespace = ns;
+
+//     u32 *arr = bpf_map_lookup_elem(&policy_params_fix_setuid, &psa);
+//     if(arr){
+//         for(int i = 0; i < 8; i++){
+//             if(arr[i*3 + 2] == 0xFFFFFFFF){
+//                 if(arr[i*3 + 1] == 0xFFFFFFFF){
+//                     if(arr[i*3] == 0xFFFFFFFF){
+//                         return 0;
+//                     }
+//                     else if(arr[i*3] == new->uid.val){
+//                         return 0;
+//                     }
+//                 }
+//                 else if(arr[i*3 + 1] == new->euid.val){
+//                     if(arr[i*3] == 0xFFFFFFFF){
+//                         return 0;
+//                     }
+//                     else if(arr[i*3] == new->uid.val){
+//                         return 0;
+//                     }
+//                 }
+//             }
+//             else if(arr[i*3 + 2] == new->suid.val){
+//                 if(arr[i*3 + 1] == 0xFFFFFFFF){
+//                     if(arr[i*3] == 0xFFFFFFFF){
+//                         return 0;
+//                     }
+//                     else if(arr[i*3] == new->uid.val){
+//                         return 0;
+//                     }
+//                 }
+//                 else if(arr[i*3 + 1] == new->euid.val){
+//                     if(arr[i*3] == 0xFFFFFFFF){
+//                         return 0;
+//                     }
+//                     else if(arr[i*3] == new->uid.val){
+//                         return 0;
+//                     }
+//                 }
+//             }
+//         }
+//     }
+    
+
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
+//     // Create event, we are going to send this over to userspace.
+    
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+
+//     return -EPERM;
+// }
+
+// SEC("lsm/socket_accept")
+// int BPF_PROG(socket_accept, struct socket *sock, struct socket *newsock, int ret){
+//     if (ret != 0)
+//         return ret;
+
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, SOCKET_ACCEPT);
+    
+//     u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_ACCEPT, 0);
+//     if(init_failed)
+//         return 0;
+//     // u32 policy = lookup_policy(pidns, mntns, syscall);
+//     // if(!policy)
+//     //     return 0;
+//     u32 ip_dest = sock->sk->__sk_common.skc_daddr;
+//     u32 port_dest = (u32)(sock->sk->__sk_common.skc_dport);
+//     u32 proto_dest = (u32)(sock->sk->sk_protocol);
+//     bpf_printk("socket_accept LSM Hook triggered! ip_dest = %u, port_dest = %u", ip_dest, port_dest);
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy)
+//         return 0;
+//     struct pid_syscall_args psa;
+//     psa.syscall = syscall;
+//     psa.namespace = ns;
+
+//     u32 *arr = bpf_map_lookup_elem(&policy_params_socket_accept, &psa);
+//     if(arr){
+//         u16 flag = 0;
+//         u32 policy_ip, policy_port, policy_proto;
+//         for(int i = 0 ; i < 8; i++){
+//             if(!arr[i * 3]&& !arr[i * 3 + 1] && !arr[i*3 + 2]){
+//                 break;
+//             }
+//             policy_ip = arr[i*3];
+//             policy_port = arr[i*3 + 1] & 0x0000FFFF;
+//             policy_proto = arr[i*3 + 2];
+//             flag = arr[i*3 + 1] >> 16;
             
-            if(flag == 0x00){
-                if(policy_ip == ip_dest && policy_port == port_dest && policy_proto == proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xfe){
-                if(!ip_dest && !port_dest && !proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xfd){
-                if(policy_port == port_dest && policy_proto == proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xfb){
-                if(policy_ip == ip_dest && policy_proto == proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xf7){
-                if(policy_ip == ip_dest && policy_port == port_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xef){
-                if(policy_proto == proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xdf){
-                if(policy_port == port_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xbf){
-                if(policy_ip == ip_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0x7f){
-                return 0;
-            }
-        } 
-    }
-    ///
+//             if(flag == 0x00){
+//                 if(policy_ip == ip_dest && policy_port == port_dest && policy_proto == proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xfe){
+//                 if(!ip_dest && !port_dest && !proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xfd){
+//                 if(policy_port == port_dest && policy_proto == proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xfb){
+//                 if(policy_ip == ip_dest && policy_proto == proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xf7){
+//                 if(policy_ip == ip_dest && policy_port == port_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xef){
+//                 if(policy_proto == proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xdf){
+//                 if(policy_port == port_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xbf){
+//                 if(policy_ip == ip_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0x7f){
+//                 return 0;
+//             }
+//         } 
+//     }
+//     ///
     
     
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-    // Create event, we are going to send this over to userspace.
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
+//     // Create event, we are going to send this over to userspace.
     
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
 
-    return -EPERM;
-} 
+//     return -EPERM;
+// } 
 
-SEC("lsm/socket_bind")
-int BPF_PROG(socket_bind, struct socket *sock, struct sockaddr *address, int addrlen, int ret){
-    if (ret != 0)
-        return ret;
+// SEC("lsm/socket_bind")
+// int BPF_PROG(socket_bind, struct socket *sock, struct sockaddr *address, int addrlen, int ret){
+//     if (ret != 0)
+//         return ret;
 
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    bpf_printk("bind triggered!");
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    bpf_printk("Check if container process");
-    if(!is_container_process)
-        return 0;
-    bpf_printk("bind triggered2!");
-    u32 syscall = lookup_syscall(ns, SOCKET_BIND);
-    u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_BIND, 0);
-    if(init_failed)
-        return 0;
-    bpf_printk("bind triggered!3");
-    struct sockaddr_in *addr = (struct sockaddr_in *)address;
-    if(!addr)
-        return 0;
-    u32 ip_dest = addr->sin_addr.s_addr;
-    u32 port_dest = (u32)(addr->sin_port);
-    u32 proto_dest = (u32)(sock->sk->sk_protocol);
-    bpf_printk("socket_bind LSM Hook triggered! ip_dest = %u, port_dest = %u", ip_dest, port_dest);
-    if (address->sa_family != AF_INET)
-    {
-        return 0;
-    }
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy)
-        return 0;
-    struct pid_syscall_args psa;
-    psa.syscall = syscall;
-    psa.namespace = ns;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     bpf_printk("bind triggered!");
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     bpf_printk("Check if container process");
+//     if(!is_container_process)
+//         return 0;
+//     bpf_printk("bind triggered2!");
+//     u32 syscall = lookup_syscall(ns, SOCKET_BIND);
+//     u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_BIND, 0);
+//     if(init_failed)
+//         return 0;
+//     bpf_printk("bind triggered!3");
+//     struct sockaddr_in *addr = (struct sockaddr_in *)address;
+//     if(!addr)
+//         return 0;
+//     u32 ip_dest = addr->sin_addr.s_addr;
+//     u32 port_dest = (u32)(addr->sin_port);
+//     u32 proto_dest = (u32)(sock->sk->sk_protocol);
+//     bpf_printk("socket_bind LSM Hook triggered! ip_dest = %u, port_dest = %u", ip_dest, port_dest);
+//     if (address->sa_family != AF_INET)
+//     {
+//         return 0;
+//     }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy)
+//         return 0;
+//     struct pid_syscall_args psa;
+//     psa.syscall = syscall;
+//     psa.namespace = ns;
 
-    u32 *arr = bpf_map_lookup_elem(&policy_params_socket_bind, &psa);
-    if(arr){
-        u16 flag = 0;
-        u32 policy_ip, policy_port, policy_proto;
-        for(int i = 0 ; i < 8; i++){
-            if(!arr[i * 3]&& !arr[i * 3 + 1] && !arr[i*3 + 2]){
-                break;
-            }
-            policy_ip = arr[i*3];
-            policy_port = arr[i*3 + 1] & 0x0000FFFF;
-            policy_proto = arr[i*3 + 2];
-            flag = arr[i*3 + 1] >> 16;
+//     u32 *arr = bpf_map_lookup_elem(&policy_params_socket_bind, &psa);
+//     if(arr){
+//         u16 flag = 0;
+//         u32 policy_ip, policy_port, policy_proto;
+//         for(int i = 0 ; i < 8; i++){
+//             if(!arr[i * 3]&& !arr[i * 3 + 1] && !arr[i*3 + 2]){
+//                 break;
+//             }
+//             policy_ip = arr[i*3];
+//             policy_port = arr[i*3 + 1] & 0x0000FFFF;
+//             policy_proto = arr[i*3 + 2];
+//             flag = arr[i*3 + 1] >> 16;
             
-            if(flag == 0x00){
-                if(policy_ip == ip_dest && policy_port == port_dest && policy_proto == proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xfe){
-                if(!ip_dest && !port_dest && !proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xfd){
-                if(policy_port == port_dest && policy_proto == proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xfb){
-                if(policy_ip == ip_dest && policy_proto == proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xf7){
-                if(policy_ip == ip_dest && policy_port == port_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xef){
-                if(policy_proto == proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xdf){
-                if(policy_port == port_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xbf){
-                if(policy_ip == ip_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0x7f){
-                return 0;
-            }
-        }
-    }
-    ///
+//             if(flag == 0x00){
+//                 if(policy_ip == ip_dest && policy_port == port_dest && policy_proto == proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xfe){
+//                 if(!ip_dest && !port_dest && !proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xfd){
+//                 if(policy_port == port_dest && policy_proto == proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xfb){
+//                 if(policy_ip == ip_dest && policy_proto == proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xf7){
+//                 if(policy_ip == ip_dest && policy_port == port_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xef){
+//                 if(policy_proto == proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xdf){
+//                 if(policy_port == port_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xbf){
+//                 if(policy_ip == ip_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0x7f){
+//                 return 0;
+//             }
+//         }
+//     }
+//     ///
     
     
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-    // Create event, we are going to send this over to userspace.
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
+//     // Create event, we are going to send this over to userspace.
     
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
 
-    return -EPERM;
-}
+//     return -EPERM;
+// }
 
-SEC("lsm/socket_connect")
-int BPF_PROG(socket_connect, struct socket *sock, struct sockaddr *address, int addrlen, int ret){
-    if (ret != 0)
-        return ret;
+// SEC("lsm/socket_connect")
+// int BPF_PROG(socket_connect, struct socket *sock, struct sockaddr *address, int addrlen, int ret){
+//     if (ret != 0)
+//         return ret;
 
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, SOCKET_CONNECT);
-    u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_CONNECT, 0);
-    bpf_printk("socket_connect triggered! syscall : %d, ret : %d", syscall, ret);
-    if(init_failed)
-        return 0;
-    if (address->sa_family != AF_INET)
-    {
-        return 0;
-    }
-    struct sockaddr_in *addr = (struct sockaddr_in *)address;
-    if(!addr)
-        return 0;
-    u32 ip_dest = addr->sin_addr.s_addr;
-    u32 port_dest = (u32)(addr->sin_port);
-    u32 proto_dest = (u32)(sock->sk->sk_protocol);
-    bpf_printk("socket_connect LSM Hook triggered! ip_dest = %d, port_dest = %d", ip_dest, port_dest);
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy)
-        return 0;
-    struct pid_syscall_args psa;
-    psa.syscall = syscall;
-    psa.namespace = ns;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, SOCKET_CONNECT);
+//     u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_CONNECT, 0);
+//     bpf_printk("socket_connect triggered! syscall : %d, ret : %d", syscall, ret);
+//     if(init_failed)
+//         return 0;
+//     if (address->sa_family != AF_INET)
+//     {
+//         return 0;
+//     }
+//     struct sockaddr_in *addr = (struct sockaddr_in *)address;
+//     if(!addr)
+//         return 0;
+//     u32 ip_dest = addr->sin_addr.s_addr;
+//     u32 port_dest = (u32)(addr->sin_port);
+//     u32 proto_dest = (u32)(sock->sk->sk_protocol);
+//     bpf_printk("socket_connect LSM Hook triggered! ip_dest = %d, port_dest = %d", ip_dest, port_dest);
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy)
+//         return 0;
+//     struct pid_syscall_args psa;
+//     psa.syscall = syscall;
+//     psa.namespace = ns;
 
-    u32 *arr = bpf_map_lookup_elem(&policy_params_socket_connect, &psa);
-    if(!arr){
-        u16 flag = 0;
-        u32 policy_ip, policy_port, policy_proto;
-        for(int i = 0 ; i < 8; i++){
-            if(!arr[i * 3]&& !arr[i * 3 + 1] && !arr[i*3 + 2]){
-                break;
-            }
-            policy_ip = arr[i*3];
-            policy_port = arr[i*3 + 1] & 0x0000FFFF;
-            policy_proto = arr[i*3 + 2];
-            flag = arr[i*3 + 1] >> 16;
+//     u32 *arr = bpf_map_lookup_elem(&policy_params_socket_connect, &psa);
+//     if(!arr){
+//         u16 flag = 0;
+//         u32 policy_ip, policy_port, policy_proto;
+//         for(int i = 0 ; i < 8; i++){
+//             if(!arr[i * 3]&& !arr[i * 3 + 1] && !arr[i*3 + 2]){
+//                 break;
+//             }
+//             policy_ip = arr[i*3];
+//             policy_port = arr[i*3 + 1] & 0x0000FFFF;
+//             policy_proto = arr[i*3 + 2];
+//             flag = arr[i*3 + 1] >> 16;
             
-            if(flag == 0x00){
-                if(policy_ip == ip_dest && policy_port == port_dest && policy_proto == proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xfe){
-                if(!ip_dest && !port_dest && !proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xfd){
-                if(policy_port == port_dest && policy_proto == proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xfb){
-                if(policy_ip == ip_dest && policy_proto == proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xf7){
-                if(policy_ip == ip_dest && policy_port == port_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xef){
-                if(policy_proto == proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xdf){
-                if(policy_port == port_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xbf){
-                if(policy_ip == ip_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0x7f){
-                return 0;
-            }
-        }   
+//             if(flag == 0x00){
+//                 if(policy_ip == ip_dest && policy_port == port_dest && policy_proto == proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xfe){
+//                 if(!ip_dest && !port_dest && !proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xfd){
+//                 if(policy_port == port_dest && policy_proto == proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xfb){
+//                 if(policy_ip == ip_dest && policy_proto == proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xf7){
+//                 if(policy_ip == ip_dest && policy_port == port_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xef){
+//                 if(policy_proto == proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xdf){
+//                 if(policy_port == port_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xbf){
+//                 if(policy_ip == ip_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0x7f){
+//                 return 0;
+//             }
+//         }   
         
-    }
-    ///
+//     }
+//     ///
     
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-    // Create event, we are going to send this over to userspace.
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
+//     // Create event, we are going to send this over to userspace.
     
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
 
-    return -EPERM;
-}
+//     return -EPERM;
+// }
 
-SEC("lsm/socket_listen")
-int BPF_PROG(socket_listen, struct socket *sock, int backlog, int ret){
-    if (ret != 0)
-        return ret;
+// SEC("lsm/socket_listen")
+// int BPF_PROG(socket_listen, struct socket *sock, int backlog, int ret){
+//     if (ret != 0)
+//         return ret;
 
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, SOCKET_LISTEN);
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, SOCKET_LISTEN);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_LISTEN, 0);
-    if(init_failed)
-        return 0;
-    // u32 policy = lookup_policy(pidns, mntns, syscall);
-    // if(!policy)
-    //     return 0;
-    u32 ip_dest = sock->sk->__sk_common.skc_daddr;
-    u32 port_dest = (u32)(sock->sk->__sk_common.skc_dport);
-    u32 proto_dest = (u32)(sock->sk->sk_protocol);
-    bpf_printk("socket_listen LSM Hook triggered! ip_dest = %u, port_dest = %u", ip_dest, port_dest);
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy)
-        return 0;
-    struct pid_syscall_args psa;
-    psa.syscall = syscall;
-    psa.namespace = ns;
+//     u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_LISTEN, 0);
+//     if(init_failed)
+//         return 0;
+//     // u32 policy = lookup_policy(pidns, mntns, syscall);
+//     // if(!policy)
+//     //     return 0;
+//     u32 ip_dest = sock->sk->__sk_common.skc_daddr;
+//     u32 port_dest = (u32)(sock->sk->__sk_common.skc_dport);
+//     u32 proto_dest = (u32)(sock->sk->sk_protocol);
+//     bpf_printk("socket_listen LSM Hook triggered! ip_dest = %u, port_dest = %u", ip_dest, port_dest);
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy)
+//         return 0;
+//     struct pid_syscall_args psa;
+//     psa.syscall = syscall;
+//     psa.namespace = ns;
 
-    u32 *arr = bpf_map_lookup_elem(&policy_params_socket_listen, &psa);
-    if(arr){
-        u16 flag = 0;
-        u32 policy_ip, policy_port, policy_proto;
-        for(int i = 0 ; i < 8; i++){
-            if(!arr[i * 3]&& !arr[i * 3 + 1] && !arr[i*3 + 2]){
-                break;
-            }
-            policy_ip = arr[i*3];
-            policy_port = arr[i*3 + 1] & 0x0000FFFF;
-            policy_proto = arr[i*3 + 2];
-            flag = arr[i*3 + 1] >> 16;
+//     u32 *arr = bpf_map_lookup_elem(&policy_params_socket_listen, &psa);
+//     if(arr){
+//         u16 flag = 0;
+//         u32 policy_ip, policy_port, policy_proto;
+//         for(int i = 0 ; i < 8; i++){
+//             if(!arr[i * 3]&& !arr[i * 3 + 1] && !arr[i*3 + 2]){
+//                 break;
+//             }
+//             policy_ip = arr[i*3];
+//             policy_port = arr[i*3 + 1] & 0x0000FFFF;
+//             policy_proto = arr[i*3 + 2];
+//             flag = arr[i*3 + 1] >> 16;
             
-            if(flag == 0x00){
-                if(policy_ip == ip_dest && policy_port == port_dest && policy_proto == proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xfe){
-                if(!ip_dest && !port_dest && !proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xfd){
-                if(policy_port == port_dest && policy_proto == proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xfb){
-                if(policy_ip == ip_dest && policy_proto == proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xf7){
-                if(policy_ip == ip_dest && policy_port == port_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xef){
-                if(policy_proto == proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xdf){
-                if(policy_port == port_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xbf){
-                if(policy_ip == ip_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0x7f){
-                return 0;
-            }
-        }   
-    }
-    ///
+//             if(flag == 0x00){
+//                 if(policy_ip == ip_dest && policy_port == port_dest && policy_proto == proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xfe){
+//                 if(!ip_dest && !port_dest && !proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xfd){
+//                 if(policy_port == port_dest && policy_proto == proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xfb){
+//                 if(policy_ip == ip_dest && policy_proto == proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xf7){
+//                 if(policy_ip == ip_dest && policy_port == port_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xef){
+//                 if(policy_proto == proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xdf){
+//                 if(policy_port == port_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xbf){
+//                 if(policy_ip == ip_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0x7f){
+//                 return 0;
+//             }
+//         }   
+//     }
+//     ///
     
 
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-    // Create event, we are going to send this over to userspace.
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
+//     // Create event, we are going to send this over to userspace.
     
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
 
-    return -EPERM;
-}
+//     return -EPERM;
+// }
 
-SEC("lsm/socket_recvmsg")
-int BPF_PROG(socket_recvmsg, struct socket *sock, struct msghdr *msg, int size, int flags, int ret){
-    if (ret != 0)
-        return ret;
+// SEC("lsm/socket_recvmsg")
+// int BPF_PROG(socket_recvmsg, struct socket *sock, struct msghdr *msg, int size, int flags, int ret){
+//     if (ret != 0)
+//         return ret;
 
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, SOCKET_RECVMSG);
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, SOCKET_RECVMSG);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_RECVMSG, 0);
-    if(init_failed)
-        return 0;
-    // u32 policy = lookup_policy(pidns, mntns, syscall);
-    // if(!policy)
-    //     return 0;
-    u32 ip_dest = sock->sk->__sk_common.skc_daddr;
-    u32 port_dest = (u32)(sock->sk->__sk_common.skc_dport);
-    u32 proto_dest = (u32)(sock->sk->sk_protocol);
-    bpf_printk("socket_recvmsg LSM Hook triggered! ip_dest = %u, port_dest = %u", ip_dest, port_dest);
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy)
-        return 0;
-    struct pid_syscall_args psa;
-    psa.syscall = syscall;
-    psa.namespace = ns;
+//     u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_RECVMSG, 0);
+//     if(init_failed)
+//         return 0;
+//     // u32 policy = lookup_policy(pidns, mntns, syscall);
+//     // if(!policy)
+//     //     return 0;
+//     u32 ip_dest = sock->sk->__sk_common.skc_daddr;
+//     u32 port_dest = (u32)(sock->sk->__sk_common.skc_dport);
+//     u32 proto_dest = (u32)(sock->sk->sk_protocol);
+//     bpf_printk("socket_recvmsg LSM Hook triggered! ip_dest = %u, port_dest = %u", ip_dest, port_dest);
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy)
+//         return 0;
+//     struct pid_syscall_args psa;
+//     psa.syscall = syscall;
+//     psa.namespace = ns;
 
-    u32 *arr = bpf_map_lookup_elem(&policy_params_socket_recvmsg, &psa);
-    if(arr){
-        u16 flag = 0;
-        u32 policy_ip, policy_port, policy_proto;
-        for(int i = 0 ; i < 8; i++){
-            if(!arr[i * 3]&& !arr[i * 3 + 1] && !arr[i*3 + 2]){
-                break;
-            }
-            policy_ip = arr[i*3];
-            policy_port = arr[i*3 + 1] & 0x0000FFFF;
-            policy_proto = arr[i*3 + 2];
-            flag = arr[i*3 + 1] >> 16;
+//     u32 *arr = bpf_map_lookup_elem(&policy_params_socket_recvmsg, &psa);
+//     if(arr){
+//         u16 flag = 0;
+//         u32 policy_ip, policy_port, policy_proto;
+//         for(int i = 0 ; i < 8; i++){
+//             if(!arr[i * 3]&& !arr[i * 3 + 1] && !arr[i*3 + 2]){
+//                 break;
+//             }
+//             policy_ip = arr[i*3];
+//             policy_port = arr[i*3 + 1] & 0x0000FFFF;
+//             policy_proto = arr[i*3 + 2];
+//             flag = arr[i*3 + 1] >> 16;
             
-            if(flag == 0x00){
-                if(policy_ip == ip_dest && policy_port == port_dest && policy_proto == proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xfe){
-                if(!ip_dest && !port_dest && !proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xfd){
-                if(policy_port == port_dest && policy_proto == proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xfb){
-                if(policy_ip == ip_dest && policy_proto == proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xf7){
-                if(policy_ip == ip_dest && policy_port == port_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xef){
-                if(policy_proto == proto_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xdf){
-                if(policy_port == port_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0xbf){
-                if(policy_ip == ip_dest){
-                    return 0;
-                }
-            }
-            else if(flag == 0x7f){
-                return 0;
-            }
-        }
-    }
-    ///
+//             if(flag == 0x00){
+//                 if(policy_ip == ip_dest && policy_port == port_dest && policy_proto == proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xfe){
+//                 if(!ip_dest && !port_dest && !proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xfd){
+//                 if(policy_port == port_dest && policy_proto == proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xfb){
+//                 if(policy_ip == ip_dest && policy_proto == proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xf7){
+//                 if(policy_ip == ip_dest && policy_port == port_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xef){
+//                 if(policy_proto == proto_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xdf){
+//                 if(policy_port == port_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0xbf){
+//                 if(policy_ip == ip_dest){
+//                     return 0;
+//                 }
+//             }
+//             else if(flag == 0x7f){
+//                 return 0;
+//             }
+//         }
+//     }
+//     ///
        
 
     
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-    // Create event, we are going to send this over to userspace.
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
+//     // Create event, we are going to send this over to userspace.
     
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
 
-    return -EPERM;
-}
+//     return -EPERM;
+// }
 
-SEC("lsm/socket_create")
-int BPF_PROG(socket_create, int family, int type, int protocol, int kern, int ret){
-    if (ret != 0)
-        return ret;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, SOCKET_CREATE);
+// SEC("lsm/socket_create")
+// int BPF_PROG(socket_create, int family, int type, int protocol, int kern, int ret){
+//     if (ret != 0)
+//         return ret;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, SOCKET_CREATE);
 
-    u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_CREATE, 0);
-    if(init_failed)
-        return 0;
-    bpf_printk("socket_create LSM Hook triggered! protocol = %u, type = %u", protocol, type);
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy)
-        return 0;
-    struct pid_syscall_args psa;
-    psa.syscall = syscall;
-    psa.namespace = ns;
+//     u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_CREATE, 0);
+//     if(init_failed)
+//         return 0;
+//     bpf_printk("socket_create LSM Hook triggered! protocol = %u, type = %u", protocol, type);
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy)
+//         return 0;
+//     struct pid_syscall_args psa;
+//     psa.syscall = syscall;
+//     psa.namespace = ns;
 
-    u32 *arr = bpf_map_lookup_elem(&policy_params_socket_create, &psa);
-    if(arr){
-        for(int i = 0; i < 8; i++){
-        if(!arr[i*2] && !arr[i*2 + 1])
-            break;
-        else if(arr[i*2] == 7){
-            if(arr[i*2 + 1] == protocol){
-                return 0;
-            }
-            else if(arr[i*2 + 1] == 7){
-                return 0;
-            }
-        }
-        else if(arr[i*2 + 1] == 7){
-            if(arr[i * 2] == type){
-                return 0;
-            }
-        }
-            else if(arr[i*2] == type && arr[i*2 + 1] == protocol){
-                return 0;
-            }
-        }
-    }
+//     u32 *arr = bpf_map_lookup_elem(&policy_params_socket_create, &psa);
+//     if(arr){
+//         for(int i = 0; i < 8; i++){
+//         if(!arr[i*2] && !arr[i*2 + 1])
+//             break;
+//         else if(arr[i*2] == 7){
+//             if(arr[i*2 + 1] == protocol){
+//                 return 0;
+//             }
+//             else if(arr[i*2 + 1] == 7){
+//                 return 0;
+//             }
+//         }
+//         else if(arr[i*2 + 1] == 7){
+//             if(arr[i * 2] == type){
+//                 return 0;
+//             }
+//         }
+//             else if(arr[i*2] == type && arr[i*2 + 1] == protocol){
+//                 return 0;
+//             }
+//         }
+//     }
 
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-    // Create event, we are going to send this over to userspace.
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
+//     // Create event, we are going to send this over to userspace.
     
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
 
-    return -EPERM;
-}
+//     return -EPERM;
+// }
 
-SEC("lsm/socket_getpeername")
-int BPF_PROG(socket_getpeername, struct socket *sock){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, SOCKET_GETPEERNAME);
+// SEC("lsm/socket_getpeername")
+// int BPF_PROG(socket_getpeername, struct socket *sock){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, SOCKET_GETPEERNAME);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_GETPEERNAME, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_GETPEERNAME, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
-SEC("lsm/socket_sendmsg")
-int BPF_PROG(socket_sendmsg, struct socket *sock, struct msghdr *msg, int size){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, SOCKET_SENDMSG);
+// SEC("lsm/socket_sendmsg")
+// int BPF_PROG(socket_sendmsg, struct socket *sock, struct msghdr *msg, int size){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, SOCKET_SENDMSG);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_SENDMSG, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_SENDMSG, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
-SEC("lsm/socket_setsockopt")
-int BPF_PROG(socket_setsockopt, struct socket *sock, int level, int optname){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, SOCKET_SETSOCKOPT);
+// SEC("lsm/socket_setsockopt")
+// int BPF_PROG(socket_setsockopt, struct socket *sock, int level, int optname){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, SOCKET_SETSOCKOPT);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_SETSOCKOPT, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_SETSOCKOPT, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
-SEC("lsm/socket_shutdown")
-int BPF_PROG(socket_shutdown, struct socket *sock, int how){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, SOCKET_SHUTDOWN);
+// SEC("lsm/socket_shutdown")
+// int BPF_PROG(socket_shutdown, struct socket *sock, int how){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, SOCKET_SHUTDOWN);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_SHUTDOWN, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_SHUTDOWN, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
-SEC("lsm/capable")
-int BPF_PROG(capable, const struct cred *cred, struct user_namespace *ns, int cap, unsigned int opts){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns nss;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    nss.pidns = pidns;
-    nss.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &nss);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(nss, CAPABLE);
+// SEC("lsm/capable")
+// int BPF_PROG(capable, const struct cred *cred, struct user_namespace *ns, int cap, unsigned int opts){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns nss;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     nss.pidns = pidns;
+//     nss.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &nss);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(nss, CAPABLE);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, CAPABLE, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, CAPABLE, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
-SEC("lsm/capget")
-int BPF_PROG(capget, struct task_struct *target, kernel_cap_t *effective, kernel_cap_t *inheritable, kernel_cap_t *permitted){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, CAPGET);
+// SEC("lsm/capget")
+// int BPF_PROG(capget, struct task_struct *target, kernel_cap_t *effective, kernel_cap_t *inheritable, kernel_cap_t *permitted){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, CAPGET);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, CAPGET, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, CAPGET, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
-SEC("lsm/capset")
-int BPF_PROG(capset, struct cred *new, const struct cred *old, const kernel_cap_t *effective, const kernel_cap_t *inheritable, const kernel_cap_t *permitted){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, CAPSET);
+// SEC("lsm/capset")
+// int BPF_PROG(capset, struct cred *new, const struct cred *old, const kernel_cap_t *effective, const kernel_cap_t *inheritable, const kernel_cap_t *permitted){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, CAPSET);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, CAPSET, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, CAPSET, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
-SEC("lsm/quotactl")
-int BPF_PROG(quotactl, int cmds, int type, int id, struct super_block *sb){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, QUOTACTL);
+// SEC("lsm/quotactl")
+// int BPF_PROG(quotactl, int cmds, int type, int id, struct super_block *sb){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, QUOTACTL);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, QUOTACTL, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, QUOTACTL, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
-SEC("lsm/syslog")
-int BPF_PROG(syslog, int type){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, SYSLOG);
+// SEC("lsm/syslog")
+// int BPF_PROG(syslog, int type){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, SYSLOG);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, SYSLOG, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, SYSLOG, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
-SEC("lsm/settime")
-int BPF_PROG(settime, const struct timespec64 *ts, const struct timezone *tz){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, SETTIME);
+// SEC("lsm/settime")
+// int BPF_PROG(settime, const struct timespec64 *ts, const struct timezone *tz){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, SETTIME);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, SETTIME, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, SETTIME, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
 
 
-SEC("lsm/sb_free_mnt_opts")
-int BPF_PROG(sb_free_mnt_opts, void **mnt_opts){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, SB_FREE_MNT_OPTS);
+// SEC("lsm/sb_free_mnt_opts")
+// int BPF_PROG(sb_free_mnt_opts, void **mnt_opts){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, SB_FREE_MNT_OPTS);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, SB_FREE_MNT_OPTS, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, SB_FREE_MNT_OPTS, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
 
-SEC("lsm/sb_statfs")
-int BPF_PROG(sb_statfs, struct dentry *dentry){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, SB_STATFS);
+// SEC("lsm/sb_statfs")
+// int BPF_PROG(sb_statfs, struct dentry *dentry){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, SB_STATFS);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, SB_STATFS, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, SB_STATFS, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
 
-SEC("lsm/sb_pivotroot")
-int BPF_PROG(sb_pivotroot, const struct path *old_path, const struct path *new_path){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, SB_PIVOTROOT);
+// SEC("lsm/sb_pivotroot")
+// int BPF_PROG(sb_pivotroot, const struct path *old_path, const struct path *new_path){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, SB_PIVOTROOT);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, SB_PIVOTROOT, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, SB_PIVOTROOT, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
 
-SEC("lsm/move_mount")
-int BPF_PROG(move_mount, const struct path *from_path, const struct path *to_path){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, MOVE_MOUNT);
+// SEC("lsm/move_mount")
+// int BPF_PROG(move_mount, const struct path *from_path, const struct path *to_path){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, MOVE_MOUNT);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, MOVE_MOUNT, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, MOVE_MOUNT, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
 
-SEC("lsm/path_notify")
-int BPF_PROG(path_notify, const struct path *path, u64 mask, unsigned int obj_type){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, PATH_NOTIFY);
+// SEC("lsm/path_notify")
+// int BPF_PROG(path_notify, const struct path *path, u64 mask, unsigned int obj_type){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, PATH_NOTIFY);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, PATH_NOTIFY, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, PATH_NOTIFY, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
 
-SEC("lsm/path_mkdir")
-int BPF_PROG(path_mkdir, const struct path *dir, struct dentry *dentry, umode_t mode){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, PATH_MKDIR);
+// SEC("lsm/path_mkdir")
+// int BPF_PROG(path_mkdir, const struct path *dir, struct dentry *dentry, umode_t mode){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, PATH_MKDIR);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, PATH_MKDIR, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, PATH_MKDIR, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
 
-SEC("lsm/path_rmdir")
-int BPF_PROG(path_rmdir, const struct path *dir, struct dentry *dentry){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, PATH_RMDIR);
+// SEC("lsm/path_rmdir")
+// int BPF_PROG(path_rmdir, const struct path *dir, struct dentry *dentry){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, PATH_RMDIR);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, PATH_RMDIR, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, PATH_RMDIR, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
 
-SEC("lsm/path_unlink")
-int BPF_PROG(path_unlink, const struct path *dir, struct dentry *dentry){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, PATH_UNLINK);
+// SEC("lsm/path_unlink")
+// int BPF_PROG(path_unlink, const struct path *dir, struct dentry *dentry){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, PATH_UNLINK);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, PATH_UNLINK, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, PATH_UNLINK, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
 
-SEC("lsm/path_symlink")
-int BPF_PROG(path_symlink, const struct path *dir, struct dentry *dentry, const char *old_name){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, PATH_SYMLINK);
+// SEC("lsm/path_symlink")
+// int BPF_PROG(path_symlink, const struct path *dir, struct dentry *dentry, const char *old_name){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, PATH_SYMLINK);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, PATH_SYMLINK, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, PATH_SYMLINK, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
 
-SEC("lsm/path_link")
-int BPF_PROG(path_link, struct dentry *old_dentry, const struct path *new_dir, struct dentry *new_dentry){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, PATH_LINK);
+// SEC("lsm/path_link")
+// int BPF_PROG(path_link, struct dentry *old_dentry, const struct path *new_dir, struct dentry *new_dentry){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, PATH_LINK);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, PATH_LINK, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, PATH_LINK, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
 
-SEC("lsm/path_rename")
-int BPF_PROG(path_rename, const struct path *old_dir, struct dentry *old_dentry, const struct path *new_dir, struct dentry *new_dentry, unsigned int flags){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, PATH_RENAME);
+// SEC("lsm/path_rename")
+// int BPF_PROG(path_rename, const struct path *old_dir, struct dentry *old_dentry, const struct path *new_dir, struct dentry *new_dentry, unsigned int flags){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, PATH_RENAME);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, PATH_RENAME, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, PATH_RENAME, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
 
-SEC("lsm/path_truncate")
-int BPF_PROG(path_truncate, const struct path *path){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, PATH_TRUNCATE);
+// SEC("lsm/path_truncate")
+// int BPF_PROG(path_truncate, const struct path *path){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, PATH_TRUNCATE);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, PATH_TRUNCATE, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, PATH_TRUNCATE, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
 
 // SEC("lsm/path_chown")
@@ -2549,274 +4731,274 @@ int BPF_PROG(path_truncate, const struct path *path){
 // }
 
 
-SEC("lsm/path_chroot")
-int BPF_PROG(path_chroot, const struct path *path){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, PATH_CHROOT);
+// SEC("lsm/path_chroot")
+// int BPF_PROG(path_chroot, const struct path *path){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, PATH_CHROOT);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, PATH_CHROOT, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, PATH_CHROOT, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
 
-SEC("lsm/mmap_file")
-int BPF_PROG(mmap_file, struct file *file, unsigned long prot, unsigned long flags){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, MMAP_FILE);
+// SEC("lsm/mmap_file")
+// int BPF_PROG(mmap_file, struct file *file, unsigned long prot, unsigned long flags){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, MMAP_FILE);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, MMAP_FILE, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, MMAP_FILE, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
 
-SEC("lsm/mmap_addr")
-int BPF_PROG(mmap_addr, unsigned long addr){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, MMAP_ADDR);
+// SEC("lsm/mmap_addr")
+// int BPF_PROG(mmap_addr, unsigned long addr){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, MMAP_ADDR);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, MMAP_ADDR, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, MMAP_ADDR, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
 
-SEC("lsm/file_fcntl")
-int BPF_PROG(file_fcntl, struct file *file, unsigned int cmd, unsigned long arg){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, FILE_FCNTL);
+// SEC("lsm/file_fcntl")
+// int BPF_PROG(file_fcntl, struct file *file, unsigned int cmd, unsigned long arg){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, FILE_FCNTL);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, FILE_FCNTL, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, FILE_FCNTL, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
 
-SEC("lsm/task_setpgid")
-int BPF_PROG(task_setpgid, struct task_struct *p, pid_t pgid){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, TASK_SETPGID);
+// SEC("lsm/task_setpgid")
+// int BPF_PROG(task_setpgid, struct task_struct *p, pid_t pgid){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, TASK_SETPGID);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, TASK_SETPGID, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, TASK_SETPGID, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
 
-SEC("lsm/task_getpgid")
-int BPF_PROG(task_getpgid, struct task_struct *p){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, TASK_GETPGID);
+// SEC("lsm/task_getpgid")
+// int BPF_PROG(task_getpgid, struct task_struct *p){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, TASK_GETPGID);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, TASK_GETPGID, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, TASK_GETPGID, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
 
 
-SEC("lsm/task_getsid")
-int BPF_PROG(task_getsid, struct task_struct *p){
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-    u32 syscall = lookup_syscall(ns, TASK_GETSID);
+// SEC("lsm/task_getsid")
+// int BPF_PROG(task_getsid, struct task_struct *p){
+//     u32 pid = bpf_get_current_pid_tgid() >> 32;
+//     u8 comm[16] = {0};
+//     bpf_get_current_comm(comm, 16);
+//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+//     if(!task)
+//         return 0;
+//     struct pid_mount_ns ns;
+//     u32 pidns = getPidInum(task);
+//     u32 mntns = getMntInum(task);
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+//     if(!is_container_process)
+//         return 0;
+//     u32 syscall = lookup_syscall(ns, TASK_GETSID);
     
-    u32 init_failed = set_syscall_map(pidns, mntns, TASK_GETSID, 0);
-    if(init_failed)
-        return 0;
+//     u32 init_failed = set_syscall_map(pidns, mntns, TASK_GETSID, 0);
+//     if(init_failed)
+//         return 0;
         
-    u32 policy = lookup_policy(pidns, mntns, syscall);
-    if(!policy){
-        return 0;
-    }
+//     u32 policy = lookup_policy(pidns, mntns, syscall);
+//     if(!policy){
+//         return 0;
+//     }
 
-    struct event *new_event = NULL;
-    new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-    if (new_event == NULL) {
-        return 0;
-    }
-    new_event->pid = pid;
-    for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-    bpf_ringbuf_submit(new_event, 0);
-    return 0;
-}
+//     struct event *new_event = NULL;
+//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
+//     if (new_event == NULL) {
+//         return 0;
+//     }
+//     new_event->pid = pid;
+//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
+//     bpf_ringbuf_submit(new_event, 0);
+//     return 0;
+// }
