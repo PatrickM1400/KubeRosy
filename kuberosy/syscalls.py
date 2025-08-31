@@ -7,8 +7,8 @@ with open("syscalls.txt", "r") as file:
             # print(line[2:-3])
             syscall = line[2:-3]
 
-            # func = 'SEC("kprobe/sys_{}_entry")\n'\
-            # "int BPF_KPROBE(sys_{}_callback)\n"\
+            # func = 'SEC("tracepoint/syscalls/sys_enter_{}")\n'\
+            # "int sys_{}_callback(struct trace_event_raw_sys_enter* ctx)\n"\
             # "{{\n"\
             #     "\tu32 pid = bpf_get_current_pid_tgid() >> 32;\n"\
             #     "\tu8 comm[16] = {{0}};\n"\
@@ -28,8 +28,11 @@ with open("syscalls.txt", "r") as file:
             #     "\treturn 0;\n"\
             # "}}\n\n".format(syscall,syscall,syscall)
 
-            func = 	'sys_{}_hook, err := link.Kprobe("sys_{}", objs.Sys{}Callback, nil)\n'\
+            s2 = syscall.split('_')
+            res = s2[0].capitalize() + ''.join(word.capitalize() for word in s2[1:])
+
+            func = 	'sys_{}_hook, _ := link.Tracepoint("syscalls" ,"sys_enter_{}", objs.Sys{}Callback, nil)\n'\
             'defer sys_{}_hook.Close()\n'\
-            'log.Println("sys_{} kprobe attached!")\n\n'.format(syscall, syscall, syscall.capitalize(), syscall, syscall)
+            'log.Println("sys_{} kprobe attached!")\n\n'.format(syscall, syscall, res, syscall, syscall)
 
             file2.write(func)

@@ -335,96 +335,92 @@ int rtp_sys_enter(struct bpf_raw_tracepoint_args *ctx){
     return 0;
 }
 
-SEC("kprobe/sys_read_entry")
-int BPF_KPROBE(sys_read_callback, unsigned int fd, const char *buf, size_t count)
+SEC("tracepoint/syscalls/sys_enter_read")
+int sys_read_callback(struct trace_event_raw_sys_enter* ctx)
 {
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-
-    bpf_printk("Read syscall triggered for fd %u", fd);
-    return 0;
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("read syscall triggered for pidns %u", pidns);
+	return 0;
 }
 
-SEC("kprobe/sys_write_entry")
-int BPF_KPROBE(sys_write_callback, unsigned int fd, const char *buf, size_t count)
+SEC("tracepoint/syscalls/sys_enter_write")
+int sys_write_callback(struct trace_event_raw_sys_enter* ctx)
 {
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-
-    bpf_printk("Write syscall triggered for fd %u", fd);
-    return 0;
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("write syscall triggered for pidns %u", pidns);
+	return 0;
 }
 
-SEC("kprobe/sys_open_entry")
-int BPF_KPROBE(sys_open_callback, unsigned int fd, const char *buf, size_t count)
+SEC("tracepoint/syscalls/sys_enter_open")
+int sys_open_callback(struct trace_event_raw_sys_enter* ctx)
 {
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-
-    bpf_printk("Open syscall triggered for fd %u", fd);
-    return 0;
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("open syscall triggered for pidns %u", pidns);
+	return 0;
 }
 
-SEC("kprobe/sys_close_entry")
-int BPF_KPROBE(sys_close_callback, unsigned int fd, const char *buf, size_t count)
+SEC("tracepoint/syscalls/sys_enter_close")
+int sys_close_callback(struct trace_event_raw_sys_enter* ctx)
 {
-    u32 pid = bpf_get_current_pid_tgid() >> 32;
-    u8 comm[16] = {0};
-    bpf_get_current_comm(comm, 16);
-    struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-    if(!task)
-        return 0;
-    struct pid_mount_ns ns;
-    u32 pidns = getPidInum(task);
-    u32 mntns = getMntInum(task);
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    if(!is_container_process)
-        return 0;
-
-    bpf_printk("close syscall triggered for fd %u", fd);
-    return 0;
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("close syscall triggered for pidns %u", pidns);
+	return 0;
 }
 
-SEC("kprobe/sys_mmap_entry")
-int BPF_KPROBE(sys_mmap_callback)
+SEC("tracepoint/syscalls/sys_enter_mmap")
+int sys_mmap_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -444,8 +440,8 @@ int BPF_KPROBE(sys_mmap_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_mprotect_entry")
-int BPF_KPROBE(sys_mprotect_callback)
+SEC("tracepoint/syscalls/sys_enter_mprotect")
+int sys_mprotect_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -465,8 +461,8 @@ int BPF_KPROBE(sys_mprotect_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_pread64_entry")
-int BPF_KPROBE(sys_pread64_callback)
+SEC("tracepoint/syscalls/sys_enter_pread64")
+int sys_pread64_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -486,8 +482,8 @@ int BPF_KPROBE(sys_pread64_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_pwrite64_entry")
-int BPF_KPROBE(sys_pwrite64_callback)
+SEC("tracepoint/syscalls/sys_enter_pwrite64")
+int sys_pwrite64_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -507,8 +503,8 @@ int BPF_KPROBE(sys_pwrite64_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_readv_entry")
-int BPF_KPROBE(sys_readv_callback)
+SEC("tracepoint/syscalls/sys_enter_readv")
+int sys_readv_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -528,8 +524,8 @@ int BPF_KPROBE(sys_readv_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_writev_entry")
-int BPF_KPROBE(sys_writev_callback)
+SEC("tracepoint/syscalls/sys_enter_writev")
+int sys_writev_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -549,8 +545,8 @@ int BPF_KPROBE(sys_writev_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_shmat_entry")
-int BPF_KPROBE(sys_shmat_callback)
+SEC("tracepoint/syscalls/sys_enter_shmat")
+int sys_shmat_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -570,8 +566,8 @@ int BPF_KPROBE(sys_shmat_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_sendfile_entry")
-int BPF_KPROBE(sys_sendfile_callback)
+SEC("tracepoint/syscalls/sys_enter_sendfile64")
+int sys_sendfile_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -591,8 +587,8 @@ int BPF_KPROBE(sys_sendfile_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_socket_entry")
-int BPF_KPROBE(sys_socket_callback)
+SEC("tracepoint/syscalls/sys_enter_socket")
+int sys_socket_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -612,8 +608,8 @@ int BPF_KPROBE(sys_socket_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_connect_entry")
-int BPF_KPROBE(sys_connect_callback)
+SEC("tracepoint/syscalls/sys_enter_connect")
+int sys_connect_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -633,8 +629,8 @@ int BPF_KPROBE(sys_connect_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_accept_entry")
-int BPF_KPROBE(sys_accept_callback)
+SEC("tracepoint/syscalls/sys_enter_accept")
+int sys_accept_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -654,8 +650,8 @@ int BPF_KPROBE(sys_accept_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_sendto_entry")
-int BPF_KPROBE(sys_sendto_callback)
+SEC("tracepoint/syscalls/sys_enter_sendto")
+int sys_sendto_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -675,8 +671,8 @@ int BPF_KPROBE(sys_sendto_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_recvfrom_entry")
-int BPF_KPROBE(sys_recvfrom_callback)
+SEC("tracepoint/syscalls/sys_enter_recvfrom")
+int sys_recvfrom_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -696,8 +692,8 @@ int BPF_KPROBE(sys_recvfrom_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_sendmsg_entry")
-int BPF_KPROBE(sys_sendmsg_callback)
+SEC("tracepoint/syscalls/sys_enter_sendmsg")
+int sys_sendmsg_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -717,8 +713,8 @@ int BPF_KPROBE(sys_sendmsg_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_recvmsg_entry")
-int BPF_KPROBE(sys_recvmsg_callback)
+SEC("tracepoint/syscalls/sys_enter_recvmsg")
+int sys_recvmsg_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -738,8 +734,8 @@ int BPF_KPROBE(sys_recvmsg_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_shutdown_entry")
-int BPF_KPROBE(sys_shutdown_callback)
+SEC("tracepoint/syscalls/sys_enter_shutdown")
+int sys_shutdown_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -759,8 +755,8 @@ int BPF_KPROBE(sys_shutdown_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_bind_entry")
-int BPF_KPROBE(sys_bind_callback)
+SEC("tracepoint/syscalls/sys_enter_bind")
+int sys_bind_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -780,8 +776,8 @@ int BPF_KPROBE(sys_bind_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_listen_entry")
-int BPF_KPROBE(sys_listen_callback)
+SEC("tracepoint/syscalls/sys_enter_listen")
+int sys_listen_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -801,8 +797,8 @@ int BPF_KPROBE(sys_listen_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_getpeername_entry")
-int BPF_KPROBE(sys_getpeername_callback)
+SEC("tracepoint/syscalls/sys_enter_getpeername")
+int sys_getpeername_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -822,8 +818,8 @@ int BPF_KPROBE(sys_getpeername_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_socketpair_entry")
-int BPF_KPROBE(sys_socketpair_callback)
+SEC("tracepoint/syscalls/sys_enter_socketpair")
+int sys_socketpair_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -843,8 +839,8 @@ int BPF_KPROBE(sys_socketpair_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_setsockopt_entry")
-int BPF_KPROBE(sys_setsockopt_callback)
+SEC("tracepoint/syscalls/sys_enter_setsockopt")
+int sys_setsockopt_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -864,8 +860,8 @@ int BPF_KPROBE(sys_setsockopt_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_clone_entry")
-int BPF_KPROBE(sys_clone_callback)
+SEC("tracepoint/syscalls/sys_enter_clone")
+int sys_clone_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -885,8 +881,8 @@ int BPF_KPROBE(sys_clone_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_fork_entry")
-int BPF_KPROBE(sys_fork_callback)
+SEC("tracepoint/syscalls/sys_enter_fork")
+int sys_fork_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -906,8 +902,8 @@ int BPF_KPROBE(sys_fork_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_vfork_entry")
-int BPF_KPROBE(sys_vfork_callback)
+SEC("tracepoint/syscalls/sys_enter_vfork")
+int sys_vfork_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -927,8 +923,8 @@ int BPF_KPROBE(sys_vfork_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_execve_entry")
-int BPF_KPROBE(sys_execve_callback)
+SEC("tracepoint/syscalls/sys_enter_execve")
+int sys_execve_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -948,8 +944,8 @@ int BPF_KPROBE(sys_execve_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_fcntl_entry")
-int BPF_KPROBE(sys_fcntl_callback)
+SEC("tracepoint/syscalls/sys_enter_fcntl")
+int sys_fcntl_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -969,8 +965,8 @@ int BPF_KPROBE(sys_fcntl_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_ftruncate_entry")
-int BPF_KPROBE(sys_ftruncate_callback)
+SEC("tracepoint/syscalls/sys_enter_ftruncate")
+int sys_ftruncate_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -990,8 +986,8 @@ int BPF_KPROBE(sys_ftruncate_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_rename_entry")
-int BPF_KPROBE(sys_rename_callback)
+SEC("tracepoint/syscalls/sys_enter_rename")
+int sys_rename_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1011,8 +1007,8 @@ int BPF_KPROBE(sys_rename_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_mkdir_entry")
-int BPF_KPROBE(sys_mkdir_callback)
+SEC("tracepoint/syscalls/sys_enter_mkdir")
+int sys_mkdir_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1032,8 +1028,8 @@ int BPF_KPROBE(sys_mkdir_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_rmdir_entry")
-int BPF_KPROBE(sys_rmdir_callback)
+SEC("tracepoint/syscalls/sys_enter_rmdir")
+int sys_rmdir_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1053,8 +1049,8 @@ int BPF_KPROBE(sys_rmdir_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_creat_entry")
-int BPF_KPROBE(sys_creat_callback)
+SEC("tracepoint/syscalls/sys_enter_creat")
+int sys_creat_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1074,8 +1070,8 @@ int BPF_KPROBE(sys_creat_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_link_entry")
-int BPF_KPROBE(sys_link_callback)
+SEC("tracepoint/syscalls/sys_enter_link")
+int sys_link_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1095,8 +1091,8 @@ int BPF_KPROBE(sys_link_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_unlink_entry")
-int BPF_KPROBE(sys_unlink_callback)
+SEC("tracepoint/syscalls/sys_enter_unlink")
+int sys_unlink_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1116,8 +1112,8 @@ int BPF_KPROBE(sys_unlink_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_symlink_entry")
-int BPF_KPROBE(sys_symlink_callback)
+SEC("tracepoint/syscalls/sys_enter_symlink")
+int sys_symlink_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1137,8 +1133,8 @@ int BPF_KPROBE(sys_symlink_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_chmod_entry")
-int BPF_KPROBE(sys_chmod_callback)
+SEC("tracepoint/syscalls/sys_enter_chmod")
+int sys_chmod_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1158,8 +1154,8 @@ int BPF_KPROBE(sys_chmod_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_fchmod_entry")
-int BPF_KPROBE(sys_fchmod_callback)
+SEC("tracepoint/syscalls/sys_enter_fchmod")
+int sys_fchmod_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1179,8 +1175,8 @@ int BPF_KPROBE(sys_fchmod_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_chown_entry")
-int BPF_KPROBE(sys_chown_callback)
+SEC("tracepoint/syscalls/sys_enter_chown")
+int sys_chown_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1200,8 +1196,8 @@ int BPF_KPROBE(sys_chown_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_fchown_entry")
-int BPF_KPROBE(sys_fchown_callback)
+SEC("tracepoint/syscalls/sys_enter_fchown")
+int sys_fchown_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1221,8 +1217,8 @@ int BPF_KPROBE(sys_fchown_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_lchown_entry")
-int BPF_KPROBE(sys_lchown_callback)
+SEC("tracepoint/syscalls/sys_enter_lchown")
+int sys_lchown_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1242,8 +1238,8 @@ int BPF_KPROBE(sys_lchown_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_ptrace_entry")
-int BPF_KPROBE(sys_ptrace_callback)
+SEC("tracepoint/syscalls/sys_enter_ptrace")
+int sys_ptrace_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1263,8 +1259,8 @@ int BPF_KPROBE(sys_ptrace_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_syslog_entry")
-int BPF_KPROBE(sys_syslog_callback)
+SEC("tracepoint/syscalls/sys_enter_syslog")
+int sys_syslog_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1284,8 +1280,8 @@ int BPF_KPROBE(sys_syslog_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_setuid_entry")
-int BPF_KPROBE(sys_setuid_callback)
+SEC("tracepoint/syscalls/sys_enter_setuid")
+int sys_setuid_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1305,8 +1301,8 @@ int BPF_KPROBE(sys_setuid_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_setgid_entry")
-int BPF_KPROBE(sys_setgid_callback)
+SEC("tracepoint/syscalls/sys_enter_setgid")
+int sys_setgid_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1326,8 +1322,8 @@ int BPF_KPROBE(sys_setgid_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_setpgid_entry")
-int BPF_KPROBE(sys_setpgid_callback)
+SEC("tracepoint/syscalls/sys_enter_setpgid")
+int sys_setpgid_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1347,8 +1343,8 @@ int BPF_KPROBE(sys_setpgid_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_getpgrp_entry")
-int BPF_KPROBE(sys_getpgrp_callback)
+SEC("tracepoint/syscalls/sys_enter_getpgrp")
+int sys_getpgrp_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1368,8 +1364,8 @@ int BPF_KPROBE(sys_getpgrp_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_setreuid_entry")
-int BPF_KPROBE(sys_setreuid_callback)
+SEC("tracepoint/syscalls/sys_enter_setreuid")
+int sys_setreuid_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1389,8 +1385,8 @@ int BPF_KPROBE(sys_setreuid_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_setregid_entry")
-int BPF_KPROBE(sys_setregid_callback)
+SEC("tracepoint/syscalls/sys_enter_setregid")
+int sys_setregid_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1410,8 +1406,8 @@ int BPF_KPROBE(sys_setregid_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_setgroups_entry")
-int BPF_KPROBE(sys_setgroups_callback)
+SEC("tracepoint/syscalls/sys_enter_setgroups")
+int sys_setgroups_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1431,8 +1427,8 @@ int BPF_KPROBE(sys_setgroups_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_setresuid_entry")
-int BPF_KPROBE(sys_setresuid_callback)
+SEC("tracepoint/syscalls/sys_enter_setresuid")
+int sys_setresuid_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1452,8 +1448,8 @@ int BPF_KPROBE(sys_setresuid_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_setresgid_entry")
-int BPF_KPROBE(sys_setresgid_callback)
+SEC("tracepoint/syscalls/sys_enter_setresgid")
+int sys_setresgid_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1473,8 +1469,8 @@ int BPF_KPROBE(sys_setresgid_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_getsid_entry")
-int BPF_KPROBE(sys_getsid_callback)
+SEC("tracepoint/syscalls/sys_enter_getsid")
+int sys_getsid_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1494,8 +1490,8 @@ int BPF_KPROBE(sys_getsid_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_capget_entry")
-int BPF_KPROBE(sys_capget_callback)
+SEC("tracepoint/syscalls/sys_enter_capget")
+int sys_capget_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1515,8 +1511,8 @@ int BPF_KPROBE(sys_capget_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_capset_entry")
-int BPF_KPROBE(sys_capset_callback)
+SEC("tracepoint/syscalls/sys_enter_capset")
+int sys_capset_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1536,8 +1532,8 @@ int BPF_KPROBE(sys_capset_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_mknod_entry")
-int BPF_KPROBE(sys_mknod_callback)
+SEC("tracepoint/syscalls/sys_enter_mknod")
+int sys_mknod_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1557,29 +1553,8 @@ int BPF_KPROBE(sys_mknod_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_uselib_entry")
-int BPF_KPROBE(sys_uselib_callback)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("uselib syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("kprobe/sys_ustat_entry")
-int BPF_KPROBE(sys_ustat_callback)
+SEC("tracepoint/syscalls/sys_enter_ustat")
+int sys_ustat_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1599,8 +1574,8 @@ int BPF_KPROBE(sys_ustat_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_statfs_entry")
-int BPF_KPROBE(sys_statfs_callback)
+SEC("tracepoint/syscalls/sys_enter_statfs")
+int sys_statfs_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1620,8 +1595,8 @@ int BPF_KPROBE(sys_statfs_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_fstatfs_entry")
-int BPF_KPROBE(sys_fstatfs_callback)
+SEC("tracepoint/syscalls/sys_enter_fstatfs")
+int sys_fstatfs_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1641,8 +1616,8 @@ int BPF_KPROBE(sys_fstatfs_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_pivot_root_entry")
-int BPF_KPROBE(sys_pivot_root_callback)
+SEC("tracepoint/syscalls/sys_enter_pivot_root")
+int sys_pivot_root_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1662,8 +1637,8 @@ int BPF_KPROBE(sys_pivot_root_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_chroot_entry")
-int BPF_KPROBE(sys_chroot_callback)
+SEC("tracepoint/syscalls/sys_enter_chroot")
+int sys_chroot_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1683,8 +1658,8 @@ int BPF_KPROBE(sys_chroot_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_settimeofday_entry")
-int BPF_KPROBE(sys_settimeofday_callback)
+SEC("tracepoint/syscalls/sys_enter_settimeofday")
+int sys_settimeofday_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1704,8 +1679,8 @@ int BPF_KPROBE(sys_settimeofday_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_swapon_entry")
-int BPF_KPROBE(sys_swapon_callback)
+SEC("tracepoint/syscalls/sys_enter_swapon")
+int sys_swapon_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1725,8 +1700,8 @@ int BPF_KPROBE(sys_swapon_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_swapoff_entry")
-int BPF_KPROBE(sys_swapoff_callback)
+SEC("tracepoint/syscalls/sys_enter_swapoff")
+int sys_swapoff_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1746,8 +1721,8 @@ int BPF_KPROBE(sys_swapoff_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_acct_entry")
-int BPF_KPROBE(sys_acct_callback)
+SEC("tracepoint/syscalls/sys_enter_acct")
+int sys_acct_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1767,8 +1742,8 @@ int BPF_KPROBE(sys_acct_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_quotactl_entry")
-int BPF_KPROBE(sys_quotactl_callback)
+SEC("tracepoint/syscalls/sys_enter_quotactl")
+int sys_quotactl_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1788,8 +1763,8 @@ int BPF_KPROBE(sys_quotactl_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_io_setup_entry")
-int BPF_KPROBE(sys_io_setup_callback)
+SEC("tracepoint/syscalls/sys_enter_io_setup")
+int sys_io_setup_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1809,8 +1784,8 @@ int BPF_KPROBE(sys_io_setup_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_remap_file_pages_entry")
-int BPF_KPROBE(sys_remap_file_pages_callback)
+SEC("tracepoint/syscalls/sys_enter_remap_file_pages")
+int sys_remap_file_pages_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1830,8 +1805,8 @@ int BPF_KPROBE(sys_remap_file_pages_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_clock_settime_entry")
-int BPF_KPROBE(sys_clock_settime_callback)
+SEC("tracepoint/syscalls/sys_enter_clock_settime")
+int sys_clock_settime_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1851,8 +1826,8 @@ int BPF_KPROBE(sys_clock_settime_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_inotify_add_watch_entry")
-int BPF_KPROBE(sys_inotify_add_watch_callback)
+SEC("tracepoint/syscalls/sys_enter_inotify_add_watch")
+int sys_inotify_add_watch_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1872,8 +1847,8 @@ int BPF_KPROBE(sys_inotify_add_watch_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_openat_entry")
-int BPF_KPROBE(sys_openat_callback)
+SEC("tracepoint/syscalls/sys_enter_openat")
+int sys_openat_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1893,8 +1868,8 @@ int BPF_KPROBE(sys_openat_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_mkdirat_entry")
-int BPF_KPROBE(sys_mkdirat_callback)
+SEC("tracepoint/syscalls/sys_enter_mkdirat")
+int sys_mkdirat_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1914,8 +1889,8 @@ int BPF_KPROBE(sys_mkdirat_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_fchownat_entry")
-int BPF_KPROBE(sys_fchownat_callback)
+SEC("tracepoint/syscalls/sys_enter_fchownat")
+int sys_fchownat_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1935,8 +1910,8 @@ int BPF_KPROBE(sys_fchownat_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_renameat_entry")
-int BPF_KPROBE(sys_renameat_callback)
+SEC("tracepoint/syscalls/sys_enter_renameat")
+int sys_renameat_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1956,8 +1931,8 @@ int BPF_KPROBE(sys_renameat_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_linkat_entry")
-int BPF_KPROBE(sys_linkat_callback)
+SEC("tracepoint/syscalls/sys_enter_linkat")
+int sys_linkat_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1977,8 +1952,8 @@ int BPF_KPROBE(sys_linkat_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_symlinkat_entry")
-int BPF_KPROBE(sys_symlinkat_callback)
+SEC("tracepoint/syscalls/sys_enter_symlinkat")
+int sys_symlinkat_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1998,8 +1973,8 @@ int BPF_KPROBE(sys_symlinkat_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_fchmodat_entry")
-int BPF_KPROBE(sys_fchmodat_callback)
+SEC("tracepoint/syscalls/sys_enter_fchmodat")
+int sys_fchmodat_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2019,8 +1994,8 @@ int BPF_KPROBE(sys_fchmodat_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_unshare_entry")
-int BPF_KPROBE(sys_unshare_callback)
+SEC("tracepoint/syscalls/sys_enter_unshare")
+int sys_unshare_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2040,8 +2015,8 @@ int BPF_KPROBE(sys_unshare_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_fallocate_entry")
-int BPF_KPROBE(sys_fallocate_callback)
+SEC("tracepoint/syscalls/sys_enter_fallocate")
+int sys_fallocate_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2061,8 +2036,8 @@ int BPF_KPROBE(sys_fallocate_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_accept4_entry")
-int BPF_KPROBE(sys_accept4_callback)
+SEC("tracepoint/syscalls/sys_enter_accept4")
+int sys_accept4_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2082,8 +2057,8 @@ int BPF_KPROBE(sys_accept4_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_preadv_entry")
-int BPF_KPROBE(sys_preadv_callback)
+SEC("tracepoint/syscalls/sys_enter_preadv")
+int sys_preadv_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2103,8 +2078,8 @@ int BPF_KPROBE(sys_preadv_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_pwritev_entry")
-int BPF_KPROBE(sys_pwritev_callback)
+SEC("tracepoint/syscalls/sys_enter_pwritev")
+int sys_pwritev_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2124,8 +2099,8 @@ int BPF_KPROBE(sys_pwritev_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_recvmmsg_entry")
-int BPF_KPROBE(sys_recvmmsg_callback)
+SEC("tracepoint/syscalls/sys_enter_recvmmsg")
+int sys_recvmmsg_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2145,8 +2120,8 @@ int BPF_KPROBE(sys_recvmmsg_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_fanotify_mark_entry")
-int BPF_KPROBE(sys_fanotify_mark_callback)
+SEC("tracepoint/syscalls/sys_enter_fanotify_mark")
+int sys_fanotify_mark_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2166,8 +2141,8 @@ int BPF_KPROBE(sys_fanotify_mark_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_open_by_handle_at_entry")
-int BPF_KPROBE(sys_open_by_handle_at_callback)
+SEC("tracepoint/syscalls/sys_enter_open_by_handle_at")
+int sys_open_by_handle_at_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2187,8 +2162,8 @@ int BPF_KPROBE(sys_open_by_handle_at_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_sendmmsg_entry")
-int BPF_KPROBE(sys_sendmmsg_callback)
+SEC("tracepoint/syscalls/sys_enter_sendmmsg")
+int sys_sendmmsg_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2208,8 +2183,8 @@ int BPF_KPROBE(sys_sendmmsg_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_setns_entry")
-int BPF_KPROBE(sys_setns_callback)
+SEC("tracepoint/syscalls/sys_enter_setns")
+int sys_setns_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2229,8 +2204,8 @@ int BPF_KPROBE(sys_setns_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_renameat2_entry")
-int BPF_KPROBE(sys_renameat2_callback)
+SEC("tracepoint/syscalls/sys_enter_renameat2")
+int sys_renameat2_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2250,8 +2225,8 @@ int BPF_KPROBE(sys_renameat2_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_execveat_entry")
-int BPF_KPROBE(sys_execveat_callback)
+SEC("tracepoint/syscalls/sys_enter_execveat")
+int sys_execveat_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2271,8 +2246,8 @@ int BPF_KPROBE(sys_execveat_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_copy_file_range_entry")
-int BPF_KPROBE(sys_copy_file_range_callback)
+SEC("tracepoint/syscalls/sys_enter_copy_file_range")
+int sys_copy_file_range_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2292,8 +2267,8 @@ int BPF_KPROBE(sys_copy_file_range_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_preadv2_entry")
-int BPF_KPROBE(sys_preadv2_callback)
+SEC("tracepoint/syscalls/sys_enter_preadv2")
+int sys_preadv2_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2313,8 +2288,8 @@ int BPF_KPROBE(sys_preadv2_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_pwritev2_entry")
-int BPF_KPROBE(sys_pwritev2_callback)
+SEC("tracepoint/syscalls/sys_enter_pwritev2")
+int sys_pwritev2_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2334,8 +2309,8 @@ int BPF_KPROBE(sys_pwritev2_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_pkey_mprotect_entry")
-int BPF_KPROBE(sys_pkey_mprotect_callback)
+SEC("tracepoint/syscalls/sys_enter_pkey_mprotect")
+int sys_pkey_mprotect_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2355,8 +2330,8 @@ int BPF_KPROBE(sys_pkey_mprotect_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_io_uring_setup_entry")
-int BPF_KPROBE(sys_io_uring_setup_callback)
+SEC("tracepoint/syscalls/sys_enter_io_uring_setup")
+int sys_io_uring_setup_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2376,8 +2351,8 @@ int BPF_KPROBE(sys_io_uring_setup_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_move_mount_entry")
-int BPF_KPROBE(sys_move_mount_callback)
+SEC("tracepoint/syscalls/sys_enter_move_mount")
+int sys_move_mount_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2397,8 +2372,8 @@ int BPF_KPROBE(sys_move_mount_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_fsconfig_entry")
-int BPF_KPROBE(sys_fsconfig_callback)
+SEC("tracepoint/syscalls/sys_enter_fsconfig")
+int sys_fsconfig_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2418,8 +2393,8 @@ int BPF_KPROBE(sys_fsconfig_callback)
 	return 0;
 }
 
-SEC("kprobe/sys_fsmount_entry")
-int BPF_KPROBE(sys_fsmount_callback)
+SEC("tracepoint/syscalls/sys_enter_fsmount")
+int sys_fsmount_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2495,7 +2470,6 @@ int BPF_KPROBE(sys_fsmount_callback)
 /*capget*/
 /*capset*/
 /*mknod*/
-/*uselib*/
 /*ustat*/
 /*statfs*/
 /*fstatfs*/
