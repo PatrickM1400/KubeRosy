@@ -335,300 +335,6 @@ int rtp_sys_enter(struct bpf_raw_tracepoint_args *ctx){
     return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_read")
-int sys_read_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("read syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_write")
-int sys_write_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("write syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_open")
-int sys_open_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("open syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_close")
-int sys_close_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("close syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_mmap")
-int sys_mmap_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("mmap syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_mprotect")
-int sys_mprotect_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("mprotect syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_pread64")
-int sys_pread64_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("pread64 syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_pwrite64")
-int sys_pwrite64_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("pwrite64 syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_readv")
-int sys_readv_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("readv syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_writev")
-int sys_writev_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("writev syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_shmat")
-int sys_shmat_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("shmat syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_sendfile64")
-int sys_sendfile_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("sendfile syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_socket")
-int sys_socket_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("socket syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_connect")
-int sys_connect_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("connect syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
 SEC("tracepoint/syscalls/sys_enter_accept")
 int sys_accept_callback(struct trace_event_raw_sys_enter* ctx)
 {
@@ -650,8 +356,8 @@ int sys_accept_callback(struct trace_event_raw_sys_enter* ctx)
 	return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_sendto")
-int sys_sendto_callback(struct trace_event_raw_sys_enter* ctx)
+SEC("tracepoint/syscalls/sys_enter_accept4")
+int sys_accept4_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -667,12 +373,12 @@ int sys_sendto_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("sendto syscall triggered for pidns %u", pidns);
+	bpf_printk("accept4 syscall triggered for pidns %u", pidns);
 	return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_recvfrom")
-int sys_recvfrom_callback(struct trace_event_raw_sys_enter* ctx)
+SEC("tracepoint/syscalls/sys_enter_access")
+int sys_access_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -688,12 +394,12 @@ int sys_recvfrom_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("recvfrom syscall triggered for pidns %u", pidns);
+	bpf_printk("access syscall triggered for pidns %u", pidns);
 	return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_sendmsg")
-int sys_sendmsg_callback(struct trace_event_raw_sys_enter* ctx)
+SEC("tracepoint/syscalls/sys_enter_acct")
+int sys_acct_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -709,12 +415,12 @@ int sys_sendmsg_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("sendmsg syscall triggered for pidns %u", pidns);
+	bpf_printk("acct syscall triggered for pidns %u", pidns);
 	return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_recvmsg")
-int sys_recvmsg_callback(struct trace_event_raw_sys_enter* ctx)
+SEC("tracepoint/syscalls/sys_enter_add_key")
+int sys_add_key_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -730,12 +436,12 @@ int sys_recvmsg_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("recvmsg syscall triggered for pidns %u", pidns);
+	bpf_printk("add_key syscall triggered for pidns %u", pidns);
 	return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_shutdown")
-int sys_shutdown_callback(struct trace_event_raw_sys_enter* ctx)
+SEC("tracepoint/syscalls/sys_enter_adjtimex")
+int sys_adjtimex_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -751,7 +457,49 @@ int sys_shutdown_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("shutdown syscall triggered for pidns %u", pidns);
+	bpf_printk("adjtimex syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_alarm")
+int sys_alarm_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("alarm syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_arch_prctl")
+int sys_arch_prctl_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("arch_prctl syscall triggered for pidns %u", pidns);
 	return 0;
 }
 
@@ -776,8 +524,8 @@ int sys_bind_callback(struct trace_event_raw_sys_enter* ctx)
 	return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_listen")
-int sys_listen_callback(struct trace_event_raw_sys_enter* ctx)
+SEC("tracepoint/syscalls/sys_enter_bpf")
+int sys_bpf_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -793,12 +541,12 @@ int sys_listen_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("listen syscall triggered for pidns %u", pidns);
+	bpf_printk("bpf syscall triggered for pidns %u", pidns);
 	return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_getpeername")
-int sys_getpeername_callback(struct trace_event_raw_sys_enter* ctx)
+SEC("tracepoint/syscalls/sys_enter_brk")
+int sys_brk_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -814,679 +562,7 @@ int sys_getpeername_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getpeername syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_socketpair")
-int sys_socketpair_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("socketpair syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_setsockopt")
-int sys_setsockopt_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("setsockopt syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_clone")
-int sys_clone_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("clone syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_fork")
-int sys_fork_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("fork syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_vfork")
-int sys_vfork_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("vfork syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_execve")
-int sys_execve_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("execve syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_fcntl")
-int sys_fcntl_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("fcntl syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_ftruncate")
-int sys_ftruncate_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("ftruncate syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_rename")
-int sys_rename_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("rename syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_mkdir")
-int sys_mkdir_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("mkdir syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_rmdir")
-int sys_rmdir_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("rmdir syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_creat")
-int sys_creat_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("creat syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_link")
-int sys_link_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("link syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_unlink")
-int sys_unlink_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("unlink syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_symlink")
-int sys_symlink_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("symlink syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_chmod")
-int sys_chmod_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("chmod syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_fchmod")
-int sys_fchmod_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("fchmod syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_chown")
-int sys_chown_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("chown syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_fchown")
-int sys_fchown_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("fchown syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_lchown")
-int sys_lchown_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("lchown syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_ptrace")
-int sys_ptrace_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("ptrace syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_syslog")
-int sys_syslog_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("syslog syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_setuid")
-int sys_setuid_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("setuid syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_setgid")
-int sys_setgid_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("setgid syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_setpgid")
-int sys_setpgid_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("setpgid syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_getpgrp")
-int sys_getpgrp_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("getpgrp syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_setreuid")
-int sys_setreuid_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("setreuid syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_setregid")
-int sys_setregid_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("setregid syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_setgroups")
-int sys_setgroups_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("setgroups syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_setresuid")
-int sys_setresuid_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("setresuid syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_setresgid")
-int sys_setresgid_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("setresgid syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_getsid")
-int sys_getsid_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("getsid syscall triggered for pidns %u", pidns);
+	bpf_printk("brk syscall triggered for pidns %u", pidns);
 	return 0;
 }
 
@@ -1532,8 +608,8 @@ int sys_capset_callback(struct trace_event_raw_sys_enter* ctx)
 	return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_mknod")
-int sys_mknod_callback(struct trace_event_raw_sys_enter* ctx)
+SEC("tracepoint/syscalls/sys_enter_chdir")
+int sys_chdir_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1549,12 +625,12 @@ int sys_mknod_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("mknod syscall triggered for pidns %u", pidns);
+	bpf_printk("chdir syscall triggered for pidns %u", pidns);
 	return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_ustat")
-int sys_ustat_callback(struct trace_event_raw_sys_enter* ctx)
+SEC("tracepoint/syscalls/sys_enter_chmod")
+int sys_chmod_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1570,12 +646,12 @@ int sys_ustat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("ustat syscall triggered for pidns %u", pidns);
+	bpf_printk("chmod syscall triggered for pidns %u", pidns);
 	return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_statfs")
-int sys_statfs_callback(struct trace_event_raw_sys_enter* ctx)
+SEC("tracepoint/syscalls/sys_enter_chown")
+int sys_chown_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1591,49 +667,7 @@ int sys_statfs_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("statfs syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_fstatfs")
-int sys_fstatfs_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("fstatfs syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_pivot_root")
-int sys_pivot_root_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("pivot_root syscall triggered for pidns %u", pidns);
+	bpf_printk("chown syscall triggered for pidns %u", pidns);
 	return 0;
 }
 
@@ -1658,8 +692,8 @@ int sys_chroot_callback(struct trace_event_raw_sys_enter* ctx)
 	return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_settimeofday")
-int sys_settimeofday_callback(struct trace_event_raw_sys_enter* ctx)
+SEC("tracepoint/syscalls/sys_enter_clock_adjtime")
+int sys_clock_adjtime_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1675,12 +709,12 @@ int sys_settimeofday_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("settimeofday syscall triggered for pidns %u", pidns);
+	bpf_printk("clock_adjtime syscall triggered for pidns %u", pidns);
 	return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_swapon")
-int sys_swapon_callback(struct trace_event_raw_sys_enter* ctx)
+SEC("tracepoint/syscalls/sys_enter_clock_getres")
+int sys_clock_getres_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1696,12 +730,12 @@ int sys_swapon_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("swapon syscall triggered for pidns %u", pidns);
+	bpf_printk("clock_getres syscall triggered for pidns %u", pidns);
 	return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_swapoff")
-int sys_swapoff_callback(struct trace_event_raw_sys_enter* ctx)
+SEC("tracepoint/syscalls/sys_enter_clock_gettime")
+int sys_clock_gettime_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1717,12 +751,12 @@ int sys_swapoff_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("swapoff syscall triggered for pidns %u", pidns);
+	bpf_printk("clock_gettime syscall triggered for pidns %u", pidns);
 	return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_acct")
-int sys_acct_callback(struct trace_event_raw_sys_enter* ctx)
+SEC("tracepoint/syscalls/sys_enter_clock_nanosleep")
+int sys_clock_nanosleep_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1738,70 +772,7 @@ int sys_acct_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("acct syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_quotactl")
-int sys_quotactl_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("quotactl syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_io_setup")
-int sys_io_setup_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("io_setup syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_remap_file_pages")
-int sys_remap_file_pages_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("remap_file_pages syscall triggered for pidns %u", pidns);
+	bpf_printk("clock_nanosleep syscall triggered for pidns %u", pidns);
 	return 0;
 }
 
@@ -1826,8 +797,8 @@ int sys_clock_settime_callback(struct trace_event_raw_sys_enter* ctx)
 	return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_inotify_add_watch")
-int sys_inotify_add_watch_callback(struct trace_event_raw_sys_enter* ctx)
+SEC("tracepoint/syscalls/sys_enter_clone")
+int sys_clone_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1843,12 +814,12 @@ int sys_inotify_add_watch_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("inotify_add_watch syscall triggered for pidns %u", pidns);
+	bpf_printk("clone syscall triggered for pidns %u", pidns);
 	return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_openat")
-int sys_openat_callback(struct trace_event_raw_sys_enter* ctx)
+SEC("tracepoint/syscalls/sys_enter_clone3")
+int sys_clone3_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1864,12 +835,12 @@ int sys_openat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("openat syscall triggered for pidns %u", pidns);
+	bpf_printk("clone3 syscall triggered for pidns %u", pidns);
 	return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_mkdirat")
-int sys_mkdirat_callback(struct trace_event_raw_sys_enter* ctx)
+SEC("tracepoint/syscalls/sys_enter_close")
+int sys_close_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1885,12 +856,12 @@ int sys_mkdirat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("mkdirat syscall triggered for pidns %u", pidns);
+	bpf_printk("close syscall triggered for pidns %u", pidns);
 	return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_fchownat")
-int sys_fchownat_callback(struct trace_event_raw_sys_enter* ctx)
+SEC("tracepoint/syscalls/sys_enter_close_range")
+int sys_close_range_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1906,12 +877,12 @@ int sys_fchownat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("fchownat syscall triggered for pidns %u", pidns);
+	bpf_printk("close_range syscall triggered for pidns %u", pidns);
 	return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_renameat")
-int sys_renameat_callback(struct trace_event_raw_sys_enter* ctx)
+SEC("tracepoint/syscalls/sys_enter_connect")
+int sys_connect_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -1927,322 +898,7 @@ int sys_renameat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("renameat syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_linkat")
-int sys_linkat_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("linkat syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_symlinkat")
-int sys_symlinkat_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("symlinkat syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_fchmodat")
-int sys_fchmodat_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("fchmodat syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_unshare")
-int sys_unshare_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("unshare syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_fallocate")
-int sys_fallocate_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("fallocate syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_accept4")
-int sys_accept4_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("accept4 syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_preadv")
-int sys_preadv_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("preadv syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_pwritev")
-int sys_pwritev_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("pwritev syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_recvmmsg")
-int sys_recvmmsg_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("recvmmsg syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_fanotify_mark")
-int sys_fanotify_mark_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("fanotify_mark syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_open_by_handle_at")
-int sys_open_by_handle_at_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("open_by_handle_at syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_sendmmsg")
-int sys_sendmmsg_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("sendmmsg syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_setns")
-int sys_setns_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("setns syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_renameat2")
-int sys_renameat2_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("renameat2 syscall triggered for pidns %u", pidns);
-	return 0;
-}
-
-SEC("tracepoint/syscalls/sys_enter_execveat")
-int sys_execveat_callback(struct trace_event_raw_sys_enter* ctx)
-{
-	u32 pid = bpf_get_current_pid_tgid() >> 32;
-	u8 comm[16] = {0};
-	bpf_get_current_comm(comm, 16);
-	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-	if(!task)
-		return 0;
-	struct pid_mount_ns ns;
-	u32 pidns = getPidInum(task);
-	u32 mntns = getMntInum(task);
-	ns.pidns = pidns;
-	ns.mountns = mntns;
-	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-	if(!is_container_process)
-		return 0;
-	bpf_printk("execveat syscall triggered for pidns %u", pidns);
+	bpf_printk("connect syscall triggered for pidns %u", pidns);
 	return 0;
 }
 
@@ -2267,8 +923,8 @@ int sys_copy_file_range_callback(struct trace_event_raw_sys_enter* ctx)
 	return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_preadv2")
-int sys_preadv2_callback(struct trace_event_raw_sys_enter* ctx)
+SEC("tracepoint/syscalls/sys_enter_creat")
+int sys_creat_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2284,12 +940,12 @@ int sys_preadv2_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("preadv2 syscall triggered for pidns %u", pidns);
+	bpf_printk("creat syscall triggered for pidns %u", pidns);
 	return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_pwritev2")
-int sys_pwritev2_callback(struct trace_event_raw_sys_enter* ctx)
+SEC("tracepoint/syscalls/sys_enter_delete_module")
+int sys_delete_module_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2305,12 +961,12 @@ int sys_pwritev2_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("pwritev2 syscall triggered for pidns %u", pidns);
+	bpf_printk("delete_module syscall triggered for pidns %u", pidns);
 	return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_pkey_mprotect")
-int sys_pkey_mprotect_callback(struct trace_event_raw_sys_enter* ctx)
+SEC("tracepoint/syscalls/sys_enter_dup")
+int sys_dup_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2326,12 +982,12 @@ int sys_pkey_mprotect_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("pkey_mprotect syscall triggered for pidns %u", pidns);
+	bpf_printk("dup syscall triggered for pidns %u", pidns);
 	return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_io_uring_setup")
-int sys_io_uring_setup_callback(struct trace_event_raw_sys_enter* ctx)
+SEC("tracepoint/syscalls/sys_enter_dup2")
+int sys_dup2_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2347,12 +1003,12 @@ int sys_io_uring_setup_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("io_uring_setup syscall triggered for pidns %u", pidns);
+	bpf_printk("dup2 syscall triggered for pidns %u", pidns);
 	return 0;
 }
 
-SEC("tracepoint/syscalls/sys_enter_move_mount")
-int sys_move_mount_callback(struct trace_event_raw_sys_enter* ctx)
+SEC("tracepoint/syscalls/sys_enter_dup3")
+int sys_dup3_callback(struct trace_event_raw_sys_enter* ctx)
 {
 	u32 pid = bpf_get_current_pid_tgid() >> 32;
 	u8 comm[16] = {0};
@@ -2368,7 +1024,658 @@ int sys_move_mount_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("move_mount syscall triggered for pidns %u", pidns);
+	bpf_printk("dup3 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_epoll_create")
+int sys_epoll_create_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("epoll_create syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_epoll_create1")
+int sys_epoll_create1_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("epoll_create1 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_epoll_ctl")
+int sys_epoll_ctl_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("epoll_ctl syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_epoll_pwait")
+int sys_epoll_pwait_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("epoll_pwait syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_epoll_pwait2")
+int sys_epoll_pwait2_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("epoll_pwait2 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_epoll_wait")
+int sys_epoll_wait_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("epoll_wait syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_eventfd")
+int sys_eventfd_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("eventfd syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_eventfd2")
+int sys_eventfd2_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("eventfd2 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_execve")
+int sys_execve_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("execve syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_execveat")
+int sys_execveat_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("execveat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_exit")
+int sys_exit_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("exit syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_exit_group")
+int sys_exit_group_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("exit_group syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_faccessat")
+int sys_faccessat_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("faccessat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_faccessat2")
+int sys_faccessat2_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("faccessat2 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_fadvise64")
+int sys_fadvise64_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fadvise64 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_fallocate")
+int sys_fallocate_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fallocate syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_fanotify_init")
+int sys_fanotify_init_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fanotify_init syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_fanotify_mark")
+int sys_fanotify_mark_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fanotify_mark syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_fchdir")
+int sys_fchdir_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fchdir syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_fchmod")
+int sys_fchmod_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fchmod syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_fchmodat")
+int sys_fchmodat_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fchmodat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_fchown")
+int sys_fchown_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fchown syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_fchownat")
+int sys_fchownat_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fchownat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_fcntl")
+int sys_fcntl_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fcntl syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_fdatasync")
+int sys_fdatasync_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fdatasync syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_fgetxattr")
+int sys_fgetxattr_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fgetxattr syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_finit_module")
+int sys_finit_module_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("finit_module syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_flistxattr")
+int sys_flistxattr_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("flistxattr syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_flock")
+int sys_flock_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("flock syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_fork")
+int sys_fork_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fork syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_fremovexattr")
+int sys_fremovexattr_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fremovexattr syscall triggered for pidns %u", pidns);
 	return 0;
 }
 
@@ -2393,6 +1700,27 @@ int sys_fsconfig_callback(struct trace_event_raw_sys_enter* ctx)
 	return 0;
 }
 
+SEC("tracepoint/syscalls/sys_enter_fsetxattr")
+int sys_fsetxattr_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fsetxattr syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
 SEC("tracepoint/syscalls/sys_enter_fsmount")
 int sys_fsmount_callback(struct trace_event_raw_sys_enter* ctx)
 {
@@ -2413,6 +1741,5847 @@ int sys_fsmount_callback(struct trace_event_raw_sys_enter* ctx)
 	bpf_printk("fsmount syscall triggered for pidns %u", pidns);
 	return 0;
 }
+
+SEC("tracepoint/syscalls/sys_enter_fsopen")
+int sys_fsopen_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fsopen syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_fspick")
+int sys_fspick_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fspick syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_fstatfs")
+int sys_fstatfs_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fstatfs syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_fsync")
+int sys_fsync_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("fsync syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_ftruncate")
+int sys_ftruncate_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("ftruncate syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_futex")
+int sys_futex_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("futex syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_futex_waitv")
+int sys_futex_waitv_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("futex_waitv syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_futimesat")
+int sys_futimesat_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("futimesat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_getcpu")
+int sys_getcpu_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getcpu syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_getcwd")
+int sys_getcwd_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getcwd syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_getdents")
+int sys_getdents_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getdents syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_getdents64")
+int sys_getdents64_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getdents64 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_getegid")
+int sys_getegid_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getegid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_geteuid")
+int sys_geteuid_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("geteuid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_getgid")
+int sys_getgid_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getgid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_getgroups")
+int sys_getgroups_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getgroups syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_getitimer")
+int sys_getitimer_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getitimer syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_get_mempolicy")
+int sys_get_mempolicy_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("get_mempolicy syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_getpeername")
+int sys_getpeername_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getpeername syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_getpgid")
+int sys_getpgid_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getpgid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_getpgrp")
+int sys_getpgrp_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getpgrp syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_getpid")
+int sys_getpid_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getpid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_getppid")
+int sys_getppid_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getppid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_getpriority")
+int sys_getpriority_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getpriority syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_getrandom")
+int sys_getrandom_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getrandom syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_getresgid")
+int sys_getresgid_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getresgid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_getresuid")
+int sys_getresuid_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getresuid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_getrlimit")
+int sys_getrlimit_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getrlimit syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_get_robust_list")
+int sys_get_robust_list_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("get_robust_list syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_getrusage")
+int sys_getrusage_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getrusage syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_getsid")
+int sys_getsid_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getsid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_getsockname")
+int sys_getsockname_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getsockname syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_getsockopt")
+int sys_getsockopt_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getsockopt syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_gettid")
+int sys_gettid_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("gettid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_gettimeofday")
+int sys_gettimeofday_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("gettimeofday syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_getuid")
+int sys_getuid_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getuid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_getxattr")
+int sys_getxattr_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("getxattr syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_init_module")
+int sys_init_module_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("init_module syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_inotify_add_watch")
+int sys_inotify_add_watch_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("inotify_add_watch syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_inotify_init")
+int sys_inotify_init_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("inotify_init syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_inotify_init1")
+int sys_inotify_init1_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("inotify_init1 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_inotify_rm_watch")
+int sys_inotify_rm_watch_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("inotify_rm_watch syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_io_cancel")
+int sys_io_cancel_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("io_cancel syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_ioctl")
+int sys_ioctl_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("ioctl syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_io_destroy")
+int sys_io_destroy_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("io_destroy syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_io_getevents")
+int sys_io_getevents_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("io_getevents syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_ioperm")
+int sys_ioperm_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("ioperm syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_io_pgetevents")
+int sys_io_pgetevents_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("io_pgetevents syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_iopl")
+int sys_iopl_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("iopl syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_ioprio_get")
+int sys_ioprio_get_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("ioprio_get syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_ioprio_set")
+int sys_ioprio_set_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("ioprio_set syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_io_setup")
+int sys_io_setup_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("io_setup syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_io_submit")
+int sys_io_submit_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("io_submit syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_io_uring_enter")
+int sys_io_uring_enter_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("io_uring_enter syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_io_uring_register")
+int sys_io_uring_register_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("io_uring_register syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_io_uring_setup")
+int sys_io_uring_setup_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("io_uring_setup syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_kcmp")
+int sys_kcmp_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("kcmp syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_kexec_file_load")
+int sys_kexec_file_load_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("kexec_file_load syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_kexec_load")
+int sys_kexec_load_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("kexec_load syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_keyctl")
+int sys_keyctl_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("keyctl syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_kill")
+int sys_kill_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("kill syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_landlock_add_rule")
+int sys_landlock_add_rule_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("landlock_add_rule syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_landlock_create_ruleset")
+int sys_landlock_create_ruleset_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("landlock_create_ruleset syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_landlock_restrict_self")
+int sys_landlock_restrict_self_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("landlock_restrict_self syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_lchown")
+int sys_lchown_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("lchown syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_lgetxattr")
+int sys_lgetxattr_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("lgetxattr syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_link")
+int sys_link_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("link syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_linkat")
+int sys_linkat_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("linkat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_listen")
+int sys_listen_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("listen syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_listxattr")
+int sys_listxattr_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("listxattr syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_llistxattr")
+int sys_llistxattr_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("llistxattr syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_lremovexattr")
+int sys_lremovexattr_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("lremovexattr syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_lseek")
+int sys_lseek_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("lseek syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_lsetxattr")
+int sys_lsetxattr_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("lsetxattr syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_madvise")
+int sys_madvise_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("madvise syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_mbind")
+int sys_mbind_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mbind syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_membarrier")
+int sys_membarrier_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("membarrier syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_memfd_create")
+int sys_memfd_create_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("memfd_create syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_memfd_secret")
+int sys_memfd_secret_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("memfd_secret syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_migrate_pages")
+int sys_migrate_pages_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("migrate_pages syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_mincore")
+int sys_mincore_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mincore syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_mkdir")
+int sys_mkdir_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mkdir syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_mkdirat")
+int sys_mkdirat_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mkdirat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_mknod")
+int sys_mknod_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mknod syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_mknodat")
+int sys_mknodat_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mknodat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_mlock")
+int sys_mlock_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mlock syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_mlock2")
+int sys_mlock2_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mlock2 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_mlockall")
+int sys_mlockall_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mlockall syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_mmap")
+int sys_mmap_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mmap syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_modify_ldt")
+int sys_modify_ldt_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("modify_ldt syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_mount")
+int sys_mount_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mount syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_mount_setattr")
+int sys_mount_setattr_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mount_setattr syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_move_mount")
+int sys_move_mount_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("move_mount syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_move_pages")
+int sys_move_pages_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("move_pages syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_mprotect")
+int sys_mprotect_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mprotect syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_mq_getsetattr")
+int sys_mq_getsetattr_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mq_getsetattr syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_mq_notify")
+int sys_mq_notify_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mq_notify syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_mq_open")
+int sys_mq_open_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mq_open syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_mq_timedreceive")
+int sys_mq_timedreceive_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mq_timedreceive syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_mq_timedsend")
+int sys_mq_timedsend_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mq_timedsend syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_mq_unlink")
+int sys_mq_unlink_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mq_unlink syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_mremap")
+int sys_mremap_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("mremap syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_msgctl")
+int sys_msgctl_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("msgctl syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_msgget")
+int sys_msgget_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("msgget syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_msgrcv")
+int sys_msgrcv_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("msgrcv syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_msgsnd")
+int sys_msgsnd_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("msgsnd syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_msync")
+int sys_msync_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("msync syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_munlock")
+int sys_munlock_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("munlock syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_munlockall")
+int sys_munlockall_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("munlockall syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_munmap")
+int sys_munmap_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("munmap syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_name_to_handle_at")
+int sys_name_to_handle_at_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("name_to_handle_at syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_nanosleep")
+int sys_nanosleep_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("nanosleep syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_newfstat")
+int sys_newfstat_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("newfstat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_newfstatat")
+int sys_newfstatat_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("newfstatat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_newlstat")
+int sys_newlstat_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("newlstat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_newstat")
+int sys_newstat_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("newstat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_newuname")
+int sys_newuname_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("newuname syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_open")
+int sys_open_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("open syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_openat")
+int sys_openat_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("openat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_openat2")
+int sys_openat2_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("openat2 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_open_by_handle_at")
+int sys_open_by_handle_at_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("open_by_handle_at syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_open_tree")
+int sys_open_tree_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("open_tree syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_pause")
+int sys_pause_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("pause syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_perf_event_open")
+int sys_perf_event_open_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("perf_event_open syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_personality")
+int sys_personality_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("personality syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_pidfd_getfd")
+int sys_pidfd_getfd_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("pidfd_getfd syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_pidfd_open")
+int sys_pidfd_open_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("pidfd_open syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_pidfd_send_signal")
+int sys_pidfd_send_signal_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("pidfd_send_signal syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_pipe")
+int sys_pipe_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("pipe syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_pipe2")
+int sys_pipe2_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("pipe2 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_pivot_root")
+int sys_pivot_root_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("pivot_root syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_pkey_alloc")
+int sys_pkey_alloc_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("pkey_alloc syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_pkey_free")
+int sys_pkey_free_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("pkey_free syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_pkey_mprotect")
+int sys_pkey_mprotect_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("pkey_mprotect syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_poll")
+int sys_poll_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("poll syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_ppoll")
+int sys_ppoll_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("ppoll syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_prctl")
+int sys_prctl_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("prctl syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_pread64")
+int sys_pread64_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("pread64 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_preadv")
+int sys_preadv_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("preadv syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_preadv2")
+int sys_preadv2_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("preadv2 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_prlimit64")
+int sys_prlimit64_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("prlimit64 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_process_madvise")
+int sys_process_madvise_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("process_madvise syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_process_mrelease")
+int sys_process_mrelease_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("process_mrelease syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_process_vm_readv")
+int sys_process_vm_readv_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("process_vm_readv syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_process_vm_writev")
+int sys_process_vm_writev_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("process_vm_writev syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_pselect6")
+int sys_pselect6_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("pselect6 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_ptrace")
+int sys_ptrace_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("ptrace syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_pwrite64")
+int sys_pwrite64_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("pwrite64 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_pwritev")
+int sys_pwritev_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("pwritev syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_pwritev2")
+int sys_pwritev2_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("pwritev2 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_quotactl")
+int sys_quotactl_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("quotactl syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_quotactl_fd")
+int sys_quotactl_fd_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("quotactl_fd syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_read")
+int sys_read_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("read syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_readahead")
+int sys_readahead_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("readahead syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_readlink")
+int sys_readlink_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("readlink syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_readlinkat")
+int sys_readlinkat_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("readlinkat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_readv")
+int sys_readv_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("readv syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_reboot")
+int sys_reboot_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("reboot syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_recvfrom")
+int sys_recvfrom_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("recvfrom syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_recvmmsg")
+int sys_recvmmsg_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("recvmmsg syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_recvmsg")
+int sys_recvmsg_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("recvmsg syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_remap_file_pages")
+int sys_remap_file_pages_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("remap_file_pages syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_removexattr")
+int sys_removexattr_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("removexattr syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_rename")
+int sys_rename_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("rename syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_renameat")
+int sys_renameat_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("renameat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_renameat2")
+int sys_renameat2_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("renameat2 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_request_key")
+int sys_request_key_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("request_key syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_restart_syscall")
+int sys_restart_syscall_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("restart_syscall syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_rmdir")
+int sys_rmdir_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("rmdir syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_rseq")
+int sys_rseq_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("rseq syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_rt_sigaction")
+int sys_rt_sigaction_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("rt_sigaction syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_rt_sigpending")
+int sys_rt_sigpending_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("rt_sigpending syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_rt_sigprocmask")
+int sys_rt_sigprocmask_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("rt_sigprocmask syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_rt_sigqueueinfo")
+int sys_rt_sigqueueinfo_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("rt_sigqueueinfo syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_rt_sigreturn")
+int sys_rt_sigreturn_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("rt_sigreturn syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_rt_sigsuspend")
+int sys_rt_sigsuspend_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("rt_sigsuspend syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_rt_sigtimedwait")
+int sys_rt_sigtimedwait_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("rt_sigtimedwait syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_rt_tgsigqueueinfo")
+int sys_rt_tgsigqueueinfo_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("rt_tgsigqueueinfo syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_sched_getaffinity")
+int sys_sched_getaffinity_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sched_getaffinity syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_sched_getattr")
+int sys_sched_getattr_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sched_getattr syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_sched_getparam")
+int sys_sched_getparam_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sched_getparam syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_sched_get_priority_max")
+int sys_sched_get_priority_max_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sched_get_priority_max syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_sched_get_priority_min")
+int sys_sched_get_priority_min_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sched_get_priority_min syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_sched_getscheduler")
+int sys_sched_getscheduler_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sched_getscheduler syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_sched_rr_get_interval")
+int sys_sched_rr_get_interval_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sched_rr_get_interval syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_sched_setaffinity")
+int sys_sched_setaffinity_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sched_setaffinity syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_sched_setattr")
+int sys_sched_setattr_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sched_setattr syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_sched_setparam")
+int sys_sched_setparam_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sched_setparam syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_sched_setscheduler")
+int sys_sched_setscheduler_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sched_setscheduler syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_sched_yield")
+int sys_sched_yield_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sched_yield syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_seccomp")
+int sys_seccomp_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("seccomp syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_select")
+int sys_select_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("select syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_semctl")
+int sys_semctl_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("semctl syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_semget")
+int sys_semget_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("semget syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_semop")
+int sys_semop_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("semop syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_semtimedop")
+int sys_semtimedop_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("semtimedop syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_sendfile64")
+int sys_sendfile64_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sendfile64 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_sendmmsg")
+int sys_sendmmsg_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sendmmsg syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_sendmsg")
+int sys_sendmsg_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sendmsg syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_sendto")
+int sys_sendto_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sendto syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_setdomainname")
+int sys_setdomainname_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setdomainname syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_setfsgid")
+int sys_setfsgid_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setfsgid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_setfsuid")
+int sys_setfsuid_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setfsuid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_setgid")
+int sys_setgid_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setgid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_setgroups")
+int sys_setgroups_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setgroups syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_sethostname")
+int sys_sethostname_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sethostname syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_setitimer")
+int sys_setitimer_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setitimer syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_set_mempolicy")
+int sys_set_mempolicy_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("set_mempolicy syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_set_mempolicy_home_node")
+int sys_set_mempolicy_home_node_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("set_mempolicy_home_node syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_setns")
+int sys_setns_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setns syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_setpgid")
+int sys_setpgid_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setpgid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_setpriority")
+int sys_setpriority_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setpriority syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_setregid")
+int sys_setregid_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setregid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_setresgid")
+int sys_setresgid_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setresgid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_setresuid")
+int sys_setresuid_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setresuid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_setreuid")
+int sys_setreuid_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setreuid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_setrlimit")
+int sys_setrlimit_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setrlimit syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_set_robust_list")
+int sys_set_robust_list_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("set_robust_list syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_setsid")
+int sys_setsid_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setsid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_setsockopt")
+int sys_setsockopt_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setsockopt syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_set_tid_address")
+int sys_set_tid_address_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("set_tid_address syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_settimeofday")
+int sys_settimeofday_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("settimeofday syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_setuid")
+int sys_setuid_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setuid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_setxattr")
+int sys_setxattr_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("setxattr syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_shmat")
+int sys_shmat_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("shmat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_shmctl")
+int sys_shmctl_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("shmctl syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_shmdt")
+int sys_shmdt_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("shmdt syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_shmget")
+int sys_shmget_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("shmget syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_shutdown")
+int sys_shutdown_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("shutdown syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_sigaltstack")
+int sys_sigaltstack_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sigaltstack syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_signalfd")
+int sys_signalfd_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("signalfd syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_signalfd4")
+int sys_signalfd4_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("signalfd4 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_socket")
+int sys_socket_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("socket syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_socketpair")
+int sys_socketpair_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("socketpair syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_splice")
+int sys_splice_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("splice syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_statfs")
+int sys_statfs_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("statfs syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_statx")
+int sys_statx_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("statx syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_swapoff")
+int sys_swapoff_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("swapoff syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_swapon")
+int sys_swapon_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("swapon syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_symlink")
+int sys_symlink_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("symlink syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_symlinkat")
+int sys_symlinkat_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("symlinkat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_sync")
+int sys_sync_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sync syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_sync_file_range")
+int sys_sync_file_range_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sync_file_range syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_syncfs")
+int sys_syncfs_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("syncfs syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_sysfs")
+int sys_sysfs_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sysfs syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_sysinfo")
+int sys_sysinfo_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("sysinfo syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_syslog")
+int sys_syslog_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("syslog syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_tee")
+int sys_tee_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("tee syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_tgkill")
+int sys_tgkill_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("tgkill syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_time")
+int sys_time_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("time syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_timer_create")
+int sys_timer_create_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("timer_create syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_timer_delete")
+int sys_timer_delete_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("timer_delete syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_timerfd_create")
+int sys_timerfd_create_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("timerfd_create syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_timerfd_gettime")
+int sys_timerfd_gettime_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("timerfd_gettime syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_timerfd_settime")
+int sys_timerfd_settime_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("timerfd_settime syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_timer_getoverrun")
+int sys_timer_getoverrun_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("timer_getoverrun syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_timer_gettime")
+int sys_timer_gettime_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("timer_gettime syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_timer_settime")
+int sys_timer_settime_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("timer_settime syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_times")
+int sys_times_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("times syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_tkill")
+int sys_tkill_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("tkill syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_truncate")
+int sys_truncate_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("truncate syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_umask")
+int sys_umask_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("umask syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_umount")
+int sys_umount_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("umount syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_unlink")
+int sys_unlink_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("unlink syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_unlinkat")
+int sys_unlinkat_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("unlinkat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_unshare")
+int sys_unshare_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("unshare syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_userfaultfd")
+int sys_userfaultfd_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("userfaultfd syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_ustat")
+int sys_ustat_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("ustat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_utime")
+int sys_utime_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("utime syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_utimensat")
+int sys_utimensat_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("utimensat syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_utimes")
+int sys_utimes_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("utimes syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_vfork")
+int sys_vfork_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("vfork syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_vhangup")
+int sys_vhangup_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("vhangup syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_vmsplice")
+int sys_vmsplice_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("vmsplice syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_wait4")
+int sys_wait4_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("wait4 syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_waitid")
+int sys_waitid_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("waitid syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_write")
+int sys_write_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("write syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+SEC("tracepoint/syscalls/sys_enter_writev")
+int sys_writev_callback(struct trace_event_raw_sys_enter* ctx)
+{
+	u32 pid = bpf_get_current_pid_tgid() >> 32;
+	u8 comm[16] = {0};
+	bpf_get_current_comm(comm, 16);
+	struct task_struct *task = (struct task_struct*)bpf_get_current_task();
+	if(!task)
+		return 0;
+	struct pid_mount_ns ns;
+	u32 pidns = getPidInum(task);
+	u32 mntns = getMntInum(task);
+	ns.pidns = pidns;
+	ns.mountns = mntns;
+	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
+	if(!is_container_process)
+		return 0;
+	bpf_printk("writev syscall triggered for pidns %u", pidns);
+	return 0;
+}
+
+
+
 
 
 
