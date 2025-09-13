@@ -62,11 +62,11 @@ struct {
 
 struct {
     __uint(type, BPF_MAP_TYPE_HASH);
-    __type(key, struct pid_mount_ns);
-    __type(value, __u32[64]);
-    __uint(max_entries, 1024);
+    __type(key, __u64);
+    __type(value, __u32);
+    __uint(max_entries, 512);
     __uint(pinning, LIBBPF_PIN_BY_NAME);
-} lsm_to_syscall SEC(".maps");
+} syscall_used SEC(".maps");
 
 /////////////////////////////////////////////////
 
@@ -210,16 +210,6 @@ struct {
 
 /////////////////////////////////////////////////
 
-u32 lookup_syscall(struct pid_mount_ns ns, u32 lsm){
-    u32 *syscall = bpf_map_lookup_elem(&lsm_to_syscall, &ns);
-    if(!syscall)
-        return 0;
-    u32 val = syscall[lsm];
-    if(!val)
-        return 0;
-    return val;
-}
-
 u32 lookup_policy(u32 pidns, u32 mntns, u32 syscall){
     struct pid_mount_ns ns;
     ns.pidns = pidns;
@@ -238,36 +228,9 @@ u32 lookup_policy(u32 pidns, u32 mntns, u32 syscall){
     return 0;
 }
 
-u32 set_syscall_map(u32 pidns, u32 mntns, u32 lsm, u32 syscall_num){
-    struct pid_mount_ns ns;
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    if(!lsm){
-        if(syscall_num < 0)
-            return 0;
-        if(syscall_num > 547)
-            return 0;
-        u32 lsm = syscall_map[syscall_num];
-        if(lsm < 1)
-            return 0;
-        if(lsm > 26)
-            return 0;
-    }
-    u32 *val = bpf_map_lookup_elem(&lsm_to_syscall, &ns);
-    if(!val){ // Namespace struct does not exist yet
-        u32 tmp[64];
-        for(int i = 0; i < 64; i++)
-            tmp[i] = 0;
-        if(lsm < 1)
-            return 0;
-        if(lsm > 26)
-            return 0;
-        tmp[lsm] = syscall_num;
-        bpf_map_update_elem(&lsm_to_syscall, &ns, tmp, BPF_ANY);
-        return 0;
-    }
-    val[lsm] = syscall_num; // Namespace struct exist, updating lsm to syscall mapping
-    bpf_map_update_elem(&lsm_to_syscall, &ns, val, BPF_ANY);
+u32 set_syscall_map(u64 syscall_num){
+    u32 val = 1; // Namespace struct exist, updating lsm to syscall mapping
+    bpf_map_update_elem(&syscall_used, &syscall_num, &val, BPF_ANY);
     return 0;
 }
 
@@ -325,16 +288,15 @@ int rtp_sys_enter(struct bpf_raw_tracepoint_args *ctx){
     // bpf_printk("namespace is pidns %u", pidns);
     // bpf_printk("namespace is mntns %u", mntns);
     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-    // bpf_printk("Within sys_enter 1");
+    bpf_printk("Within sys_enter 1");
     if(!is_container_process)
         return 0;
     // bpf_tail_call(ctx, &prog_array, SYS_ENTER_TAIL);
     u64 id = ctx->args[1];
-    set_syscall_map(pidns, mntns, 0, id);
-    // bpf_printk("Within sys_enter 2");
+    set_syscall_map(id);
+    bpf_printk("Within sys_enter 2");
     return 0;
 }
-
 SEC("tracepoint/syscalls/sys_enter_accept")
 int sys_accept_callback(struct trace_event_raw_sys_enter* ctx)
 {
@@ -352,7 +314,12 @@ int sys_accept_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("accept syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("accept syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -373,7 +340,12 @@ int sys_accept4_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("accept4 syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("accept4 syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -394,7 +366,12 @@ int sys_access_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("access syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("access syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -415,7 +392,12 @@ int sys_acct_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("acct syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("acct syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -436,7 +418,12 @@ int sys_add_key_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("add_key syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("add_key syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -457,7 +444,12 @@ int sys_adjtimex_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("adjtimex syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("adjtimex syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -478,7 +470,12 @@ int sys_alarm_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("alarm syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("alarm syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -499,7 +496,12 @@ int sys_arch_prctl_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("arch_prctl syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("arch_prctl syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -520,7 +522,12 @@ int sys_bind_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("bind syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("bind syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -541,7 +548,12 @@ int sys_bpf_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("bpf syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("bpf syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -562,7 +574,12 @@ int sys_brk_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("brk syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("brk syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -583,7 +600,12 @@ int sys_capget_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("capget syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("capget syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -604,7 +626,12 @@ int sys_capset_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("capset syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("capset syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -625,7 +652,12 @@ int sys_chdir_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("chdir syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("chdir syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -646,7 +678,12 @@ int sys_chmod_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("chmod syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("chmod syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -667,7 +704,12 @@ int sys_chown_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("chown syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("chown syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -688,7 +730,12 @@ int sys_chroot_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("chroot syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("chroot syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -709,7 +756,12 @@ int sys_clock_adjtime_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("clock_adjtime syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("clock_adjtime syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -730,7 +782,12 @@ int sys_clock_getres_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("clock_getres syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("clock_getres syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -751,7 +808,12 @@ int sys_clock_gettime_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("clock_gettime syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("clock_gettime syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -772,7 +834,12 @@ int sys_clock_nanosleep_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("clock_nanosleep syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("clock_nanosleep syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -793,7 +860,12 @@ int sys_clock_settime_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("clock_settime syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("clock_settime syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -814,7 +886,12 @@ int sys_clone_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("clone syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("clone syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -835,7 +912,12 @@ int sys_clone3_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("clone3 syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("clone3 syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -856,7 +938,12 @@ int sys_close_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("close syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("close syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -877,7 +964,12 @@ int sys_close_range_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("close_range syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("close_range syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -898,7 +990,12 @@ int sys_connect_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("connect syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("connect syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -919,7 +1016,12 @@ int sys_copy_file_range_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("copy_file_range syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("copy_file_range syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -940,7 +1042,12 @@ int sys_creat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("creat syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("creat syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -961,7 +1068,12 @@ int sys_delete_module_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("delete_module syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("delete_module syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -982,7 +1094,12 @@ int sys_dup_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("dup syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("dup syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1003,7 +1120,12 @@ int sys_dup2_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("dup2 syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("dup2 syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1024,7 +1146,12 @@ int sys_dup3_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("dup3 syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("dup3 syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1045,7 +1172,12 @@ int sys_epoll_create_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("epoll_create syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("epoll_create syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1066,7 +1198,12 @@ int sys_epoll_create1_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("epoll_create1 syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("epoll_create1 syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1087,7 +1224,12 @@ int sys_epoll_ctl_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("epoll_ctl syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("epoll_ctl syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1108,7 +1250,12 @@ int sys_epoll_pwait_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("epoll_pwait syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("epoll_pwait syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1129,7 +1276,12 @@ int sys_epoll_pwait2_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("epoll_pwait2 syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("epoll_pwait2 syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1150,7 +1302,12 @@ int sys_epoll_wait_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("epoll_wait syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("epoll_wait syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1171,7 +1328,12 @@ int sys_eventfd_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("eventfd syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("eventfd syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1192,7 +1354,12 @@ int sys_eventfd2_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("eventfd2 syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("eventfd2 syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1213,7 +1380,12 @@ int sys_execve_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("execve syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("execve syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1234,7 +1406,12 @@ int sys_execveat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("execveat syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("execveat syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1255,7 +1432,12 @@ int sys_exit_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("exit syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("exit syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1276,7 +1458,12 @@ int sys_exit_group_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("exit_group syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("exit_group syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1297,7 +1484,12 @@ int sys_faccessat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("faccessat syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("faccessat syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1318,7 +1510,12 @@ int sys_faccessat2_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("faccessat2 syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("faccessat2 syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1339,7 +1536,12 @@ int sys_fadvise64_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("fadvise64 syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("fadvise64 syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1360,7 +1562,12 @@ int sys_fallocate_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("fallocate syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("fallocate syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1381,7 +1588,12 @@ int sys_fanotify_init_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("fanotify_init syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("fanotify_init syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1402,7 +1614,12 @@ int sys_fanotify_mark_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("fanotify_mark syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("fanotify_mark syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1423,7 +1640,12 @@ int sys_fchdir_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("fchdir syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("fchdir syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1444,7 +1666,12 @@ int sys_fchmod_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("fchmod syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("fchmod syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1465,7 +1692,12 @@ int sys_fchmodat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("fchmodat syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("fchmodat syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1486,7 +1718,12 @@ int sys_fchown_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("fchown syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("fchown syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1507,7 +1744,12 @@ int sys_fchownat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("fchownat syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("fchownat syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1528,7 +1770,12 @@ int sys_fcntl_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("fcntl syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("fcntl syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1549,7 +1796,12 @@ int sys_fdatasync_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("fdatasync syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("fdatasync syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1570,7 +1822,12 @@ int sys_fgetxattr_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("fgetxattr syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("fgetxattr syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1591,7 +1848,12 @@ int sys_finit_module_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("finit_module syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("finit_module syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1612,7 +1874,12 @@ int sys_flistxattr_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("flistxattr syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("flistxattr syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1633,7 +1900,12 @@ int sys_flock_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("flock syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("flock syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1654,7 +1926,12 @@ int sys_fork_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("fork syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("fork syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1675,7 +1952,12 @@ int sys_fremovexattr_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("fremovexattr syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("fremovexattr syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1696,7 +1978,12 @@ int sys_fsconfig_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("fsconfig syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("fsconfig syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1717,7 +2004,12 @@ int sys_fsetxattr_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("fsetxattr syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("fsetxattr syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1738,7 +2030,12 @@ int sys_fsmount_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("fsmount syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("fsmount syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1759,7 +2056,12 @@ int sys_fsopen_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("fsopen syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("fsopen syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1780,7 +2082,12 @@ int sys_fspick_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("fspick syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("fspick syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1801,7 +2108,12 @@ int sys_fstatfs_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("fstatfs syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("fstatfs syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1822,7 +2134,12 @@ int sys_fsync_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("fsync syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("fsync syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1843,7 +2160,12 @@ int sys_ftruncate_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("ftruncate syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("ftruncate syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1864,7 +2186,12 @@ int sys_futex_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("futex syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("futex syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1885,7 +2212,12 @@ int sys_futex_waitv_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("futex_waitv syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("futex_waitv syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1906,7 +2238,12 @@ int sys_futimesat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("futimesat syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("futimesat syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1927,7 +2264,12 @@ int sys_getcpu_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getcpu syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("getcpu syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1948,7 +2290,12 @@ int sys_getcwd_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getcwd syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("getcwd syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1969,7 +2316,12 @@ int sys_getdents_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getdents syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("getdents syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -1990,7 +2342,12 @@ int sys_getdents64_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getdents64 syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("getdents64 syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2011,7 +2368,12 @@ int sys_getegid_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getegid syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("getegid syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2032,7 +2394,12 @@ int sys_geteuid_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("geteuid syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("geteuid syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2053,7 +2420,12 @@ int sys_getgid_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getgid syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("getgid syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2074,7 +2446,12 @@ int sys_getgroups_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getgroups syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("getgroups syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2095,7 +2472,12 @@ int sys_getitimer_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getitimer syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("getitimer syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2116,7 +2498,12 @@ int sys_get_mempolicy_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("get_mempolicy syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("get_mempolicy syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2137,7 +2524,12 @@ int sys_getpeername_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getpeername syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("getpeername syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2158,7 +2550,12 @@ int sys_getpgid_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getpgid syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("getpgid syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2179,7 +2576,12 @@ int sys_getpgrp_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getpgrp syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("getpgrp syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2200,7 +2602,12 @@ int sys_getpid_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getpid syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("getpid syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2221,7 +2628,12 @@ int sys_getppid_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getppid syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("getppid syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2242,7 +2654,12 @@ int sys_getpriority_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getpriority syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("getpriority syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2263,7 +2680,12 @@ int sys_getrandom_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getrandom syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("getrandom syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2284,7 +2706,12 @@ int sys_getresgid_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getresgid syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("getresgid syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2305,7 +2732,12 @@ int sys_getresuid_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getresuid syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("getresuid syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2326,7 +2758,12 @@ int sys_getrlimit_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getrlimit syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("getrlimit syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2347,7 +2784,12 @@ int sys_get_robust_list_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("get_robust_list syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("get_robust_list syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2368,7 +2810,12 @@ int sys_getrusage_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getrusage syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("getrusage syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2389,7 +2836,12 @@ int sys_getsid_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getsid syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("getsid syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2410,7 +2862,12 @@ int sys_getsockname_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getsockname syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("getsockname syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2431,7 +2888,12 @@ int sys_getsockopt_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getsockopt syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("getsockopt syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2452,7 +2914,12 @@ int sys_gettid_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("gettid syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("gettid syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2473,7 +2940,12 @@ int sys_gettimeofday_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("gettimeofday syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("gettimeofday syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2494,7 +2966,12 @@ int sys_getuid_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getuid syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("getuid syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2515,7 +2992,12 @@ int sys_getxattr_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("getxattr syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("getxattr syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2536,7 +3018,12 @@ int sys_init_module_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("init_module syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("init_module syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2557,7 +3044,12 @@ int sys_inotify_add_watch_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("inotify_add_watch syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("inotify_add_watch syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2578,7 +3070,12 @@ int sys_inotify_init_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("inotify_init syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("inotify_init syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2599,7 +3096,12 @@ int sys_inotify_init1_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("inotify_init1 syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("inotify_init1 syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2620,7 +3122,12 @@ int sys_inotify_rm_watch_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("inotify_rm_watch syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("inotify_rm_watch syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2641,7 +3148,12 @@ int sys_io_cancel_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("io_cancel syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("io_cancel syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2662,7 +3174,12 @@ int sys_ioctl_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("ioctl syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("ioctl syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2683,7 +3200,12 @@ int sys_io_destroy_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("io_destroy syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("io_destroy syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2704,7 +3226,12 @@ int sys_io_getevents_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("io_getevents syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("io_getevents syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2725,7 +3252,12 @@ int sys_ioperm_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("ioperm syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("ioperm syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2746,7 +3278,12 @@ int sys_io_pgetevents_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("io_pgetevents syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("io_pgetevents syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2767,7 +3304,12 @@ int sys_iopl_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("iopl syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("iopl syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2788,7 +3330,12 @@ int sys_ioprio_get_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("ioprio_get syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("ioprio_get syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2809,7 +3356,12 @@ int sys_ioprio_set_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("ioprio_set syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("ioprio_set syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2830,7 +3382,12 @@ int sys_io_setup_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("io_setup syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("io_setup syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2851,7 +3408,12 @@ int sys_io_submit_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("io_submit syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("io_submit syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2872,7 +3434,12 @@ int sys_io_uring_enter_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("io_uring_enter syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("io_uring_enter syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2893,7 +3460,12 @@ int sys_io_uring_register_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("io_uring_register syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("io_uring_register syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2914,7 +3486,12 @@ int sys_io_uring_setup_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("io_uring_setup syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("io_uring_setup syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2935,7 +3512,12 @@ int sys_kcmp_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("kcmp syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("kcmp syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2956,7 +3538,12 @@ int sys_kexec_file_load_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("kexec_file_load syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("kexec_file_load syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2977,7 +3564,12 @@ int sys_kexec_load_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("kexec_load syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("kexec_load syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -2998,7 +3590,12 @@ int sys_keyctl_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("keyctl syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("keyctl syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3019,7 +3616,12 @@ int sys_kill_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("kill syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("kill syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3040,7 +3642,12 @@ int sys_landlock_add_rule_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("landlock_add_rule syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("landlock_add_rule syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3061,7 +3668,12 @@ int sys_landlock_create_ruleset_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("landlock_create_ruleset syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("landlock_create_ruleset syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3082,7 +3694,12 @@ int sys_landlock_restrict_self_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("landlock_restrict_self syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("landlock_restrict_self syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3103,7 +3720,12 @@ int sys_lchown_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("lchown syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("lchown syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3124,7 +3746,12 @@ int sys_lgetxattr_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("lgetxattr syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("lgetxattr syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3145,7 +3772,12 @@ int sys_link_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("link syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("link syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3166,7 +3798,12 @@ int sys_linkat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("linkat syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("linkat syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3187,7 +3824,12 @@ int sys_listen_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("listen syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("listen syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3208,7 +3850,12 @@ int sys_listxattr_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("listxattr syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("listxattr syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3229,7 +3876,12 @@ int sys_llistxattr_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("llistxattr syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("llistxattr syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3250,7 +3902,12 @@ int sys_lremovexattr_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("lremovexattr syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("lremovexattr syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3271,7 +3928,12 @@ int sys_lseek_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("lseek syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("lseek syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3292,7 +3954,12 @@ int sys_lsetxattr_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("lsetxattr syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("lsetxattr syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3313,7 +3980,12 @@ int sys_madvise_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("madvise syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("madvise syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3334,7 +4006,12 @@ int sys_mbind_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("mbind syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("mbind syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3355,7 +4032,12 @@ int sys_membarrier_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("membarrier syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("membarrier syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3376,7 +4058,12 @@ int sys_memfd_create_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("memfd_create syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("memfd_create syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3397,7 +4084,12 @@ int sys_memfd_secret_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("memfd_secret syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("memfd_secret syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3418,7 +4110,12 @@ int sys_migrate_pages_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("migrate_pages syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("migrate_pages syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3439,7 +4136,12 @@ int sys_mincore_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("mincore syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("mincore syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3460,7 +4162,12 @@ int sys_mkdir_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("mkdir syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("mkdir syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3481,7 +4188,12 @@ int sys_mkdirat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("mkdirat syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("mkdirat syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3502,7 +4214,12 @@ int sys_mknod_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("mknod syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("mknod syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3523,7 +4240,12 @@ int sys_mknodat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("mknodat syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("mknodat syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3544,7 +4266,12 @@ int sys_mlock_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("mlock syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("mlock syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3565,7 +4292,12 @@ int sys_mlock2_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("mlock2 syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("mlock2 syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3586,7 +4318,12 @@ int sys_mlockall_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("mlockall syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("mlockall syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3607,7 +4344,12 @@ int sys_mmap_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("mmap syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("mmap syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3628,7 +4370,12 @@ int sys_modify_ldt_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("modify_ldt syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("modify_ldt syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3649,7 +4396,12 @@ int sys_mount_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("mount syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("mount syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3670,7 +4422,12 @@ int sys_mount_setattr_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("mount_setattr syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("mount_setattr syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3691,7 +4448,12 @@ int sys_move_mount_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("move_mount syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("move_mount syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3712,7 +4474,12 @@ int sys_move_pages_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("move_pages syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("move_pages syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3733,7 +4500,12 @@ int sys_mprotect_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("mprotect syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("mprotect syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3754,7 +4526,12 @@ int sys_mq_getsetattr_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("mq_getsetattr syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("mq_getsetattr syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3775,7 +4552,12 @@ int sys_mq_notify_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("mq_notify syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("mq_notify syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3796,7 +4578,12 @@ int sys_mq_open_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("mq_open syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("mq_open syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3817,7 +4604,12 @@ int sys_mq_timedreceive_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("mq_timedreceive syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("mq_timedreceive syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3838,7 +4630,12 @@ int sys_mq_timedsend_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("mq_timedsend syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("mq_timedsend syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3859,7 +4656,12 @@ int sys_mq_unlink_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("mq_unlink syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("mq_unlink syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3880,7 +4682,12 @@ int sys_mremap_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("mremap syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("mremap syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3901,7 +4708,12 @@ int sys_msgctl_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("msgctl syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("msgctl syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3922,7 +4734,12 @@ int sys_msgget_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("msgget syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("msgget syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3943,7 +4760,12 @@ int sys_msgrcv_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("msgrcv syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("msgrcv syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3964,7 +4786,12 @@ int sys_msgsnd_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("msgsnd syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("msgsnd syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -3985,7 +4812,12 @@ int sys_msync_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("msync syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("msync syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4006,7 +4838,12 @@ int sys_munlock_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("munlock syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("munlock syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4027,7 +4864,12 @@ int sys_munlockall_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("munlockall syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("munlockall syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4048,7 +4890,12 @@ int sys_munmap_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("munmap syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("munmap syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4069,7 +4916,12 @@ int sys_name_to_handle_at_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("name_to_handle_at syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("name_to_handle_at syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4090,7 +4942,12 @@ int sys_nanosleep_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("nanosleep syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("nanosleep syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4111,7 +4968,12 @@ int sys_newfstat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("newfstat syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("newfstat syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4132,7 +4994,12 @@ int sys_newfstatat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("newfstatat syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("newfstatat syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4153,7 +5020,12 @@ int sys_newlstat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("newlstat syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("newlstat syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4174,7 +5046,12 @@ int sys_newstat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("newstat syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("newstat syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4195,7 +5072,12 @@ int sys_newuname_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("newuname syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("newuname syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4216,7 +5098,12 @@ int sys_open_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("open syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("open syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4237,7 +5124,12 @@ int sys_openat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("openat syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("openat syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4258,7 +5150,12 @@ int sys_openat2_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("openat2 syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("openat2 syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4279,7 +5176,12 @@ int sys_open_by_handle_at_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("open_by_handle_at syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("open_by_handle_at syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4300,7 +5202,12 @@ int sys_open_tree_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("open_tree syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("open_tree syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4321,7 +5228,12 @@ int sys_pause_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("pause syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("pause syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4342,7 +5254,12 @@ int sys_perf_event_open_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("perf_event_open syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("perf_event_open syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4363,7 +5280,12 @@ int sys_personality_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("personality syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("personality syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4384,7 +5306,12 @@ int sys_pidfd_getfd_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("pidfd_getfd syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("pidfd_getfd syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4405,7 +5332,12 @@ int sys_pidfd_open_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("pidfd_open syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("pidfd_open syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4426,7 +5358,12 @@ int sys_pidfd_send_signal_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("pidfd_send_signal syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("pidfd_send_signal syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4447,7 +5384,12 @@ int sys_pipe_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("pipe syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("pipe syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4468,7 +5410,12 @@ int sys_pipe2_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("pipe2 syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("pipe2 syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4489,7 +5436,12 @@ int sys_pivot_root_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("pivot_root syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("pivot_root syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4510,7 +5462,12 @@ int sys_pkey_alloc_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("pkey_alloc syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("pkey_alloc syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4531,7 +5488,12 @@ int sys_pkey_free_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("pkey_free syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("pkey_free syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4552,7 +5514,12 @@ int sys_pkey_mprotect_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("pkey_mprotect syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("pkey_mprotect syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4573,7 +5540,12 @@ int sys_poll_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("poll syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("poll syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4594,7 +5566,12 @@ int sys_ppoll_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("ppoll syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("ppoll syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4615,7 +5592,12 @@ int sys_prctl_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("prctl syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("prctl syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4636,7 +5618,12 @@ int sys_pread64_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("pread64 syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("pread64 syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4657,7 +5644,12 @@ int sys_preadv_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("preadv syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("preadv syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4678,7 +5670,12 @@ int sys_preadv2_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("preadv2 syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("preadv2 syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4699,7 +5696,12 @@ int sys_prlimit64_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("prlimit64 syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("prlimit64 syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4720,7 +5722,12 @@ int sys_process_madvise_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("process_madvise syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("process_madvise syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4741,7 +5748,12 @@ int sys_process_mrelease_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("process_mrelease syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("process_mrelease syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4762,7 +5774,12 @@ int sys_process_vm_readv_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("process_vm_readv syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("process_vm_readv syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4783,7 +5800,12 @@ int sys_process_vm_writev_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("process_vm_writev syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("process_vm_writev syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4804,7 +5826,12 @@ int sys_pselect6_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("pselect6 syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("pselect6 syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4825,7 +5852,12 @@ int sys_ptrace_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("ptrace syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("ptrace syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4846,7 +5878,12 @@ int sys_pwrite64_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("pwrite64 syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("pwrite64 syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4867,7 +5904,12 @@ int sys_pwritev_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("pwritev syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("pwritev syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4888,7 +5930,12 @@ int sys_pwritev2_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("pwritev2 syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("pwritev2 syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4909,7 +5956,12 @@ int sys_quotactl_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("quotactl syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("quotactl syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4930,7 +5982,12 @@ int sys_quotactl_fd_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("quotactl_fd syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("quotactl_fd syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4951,7 +6008,12 @@ int sys_read_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("read syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("read syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4972,7 +6034,12 @@ int sys_readahead_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("readahead syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("readahead syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -4993,7 +6060,12 @@ int sys_readlink_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("readlink syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("readlink syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5014,7 +6086,12 @@ int sys_readlinkat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("readlinkat syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("readlinkat syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5035,7 +6112,12 @@ int sys_readv_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("readv syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("readv syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5056,7 +6138,12 @@ int sys_reboot_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("reboot syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("reboot syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5077,7 +6164,12 @@ int sys_recvfrom_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("recvfrom syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("recvfrom syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5098,7 +6190,12 @@ int sys_recvmmsg_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("recvmmsg syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("recvmmsg syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5119,7 +6216,12 @@ int sys_recvmsg_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("recvmsg syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("recvmsg syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5140,7 +6242,12 @@ int sys_remap_file_pages_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("remap_file_pages syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("remap_file_pages syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5161,7 +6268,12 @@ int sys_removexattr_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("removexattr syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("removexattr syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5182,7 +6294,12 @@ int sys_rename_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("rename syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("rename syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5203,7 +6320,12 @@ int sys_renameat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("renameat syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("renameat syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5224,7 +6346,12 @@ int sys_renameat2_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("renameat2 syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("renameat2 syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5245,7 +6372,12 @@ int sys_request_key_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("request_key syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("request_key syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5266,7 +6398,12 @@ int sys_restart_syscall_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("restart_syscall syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("restart_syscall syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5287,7 +6424,12 @@ int sys_rmdir_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("rmdir syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("rmdir syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5308,7 +6450,12 @@ int sys_rseq_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("rseq syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("rseq syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5329,7 +6476,12 @@ int sys_rt_sigaction_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("rt_sigaction syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("rt_sigaction syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5350,7 +6502,12 @@ int sys_rt_sigpending_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("rt_sigpending syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("rt_sigpending syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5371,7 +6528,12 @@ int sys_rt_sigprocmask_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("rt_sigprocmask syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("rt_sigprocmask syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5392,7 +6554,12 @@ int sys_rt_sigqueueinfo_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("rt_sigqueueinfo syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("rt_sigqueueinfo syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5413,7 +6580,12 @@ int sys_rt_sigreturn_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("rt_sigreturn syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("rt_sigreturn syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5434,7 +6606,12 @@ int sys_rt_sigsuspend_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("rt_sigsuspend syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("rt_sigsuspend syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5455,7 +6632,12 @@ int sys_rt_sigtimedwait_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("rt_sigtimedwait syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("rt_sigtimedwait syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5476,7 +6658,12 @@ int sys_rt_tgsigqueueinfo_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("rt_tgsigqueueinfo syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("rt_tgsigqueueinfo syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5497,7 +6684,12 @@ int sys_sched_getaffinity_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("sched_getaffinity syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("sched_getaffinity syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5518,7 +6710,12 @@ int sys_sched_getattr_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("sched_getattr syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("sched_getattr syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5539,7 +6736,12 @@ int sys_sched_getparam_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("sched_getparam syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("sched_getparam syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5560,7 +6762,12 @@ int sys_sched_get_priority_max_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("sched_get_priority_max syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("sched_get_priority_max syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5581,7 +6788,12 @@ int sys_sched_get_priority_min_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("sched_get_priority_min syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("sched_get_priority_min syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5602,7 +6814,12 @@ int sys_sched_getscheduler_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("sched_getscheduler syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("sched_getscheduler syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5623,7 +6840,12 @@ int sys_sched_rr_get_interval_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("sched_rr_get_interval syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("sched_rr_get_interval syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5644,7 +6866,12 @@ int sys_sched_setaffinity_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("sched_setaffinity syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("sched_setaffinity syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5665,7 +6892,12 @@ int sys_sched_setattr_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("sched_setattr syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("sched_setattr syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5686,7 +6918,12 @@ int sys_sched_setparam_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("sched_setparam syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("sched_setparam syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5707,7 +6944,12 @@ int sys_sched_setscheduler_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("sched_setscheduler syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("sched_setscheduler syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5728,7 +6970,12 @@ int sys_sched_yield_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("sched_yield syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("sched_yield syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5749,7 +6996,12 @@ int sys_seccomp_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("seccomp syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("seccomp syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5770,7 +7022,12 @@ int sys_select_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("select syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("select syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5791,7 +7048,12 @@ int sys_semctl_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("semctl syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("semctl syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5812,7 +7074,12 @@ int sys_semget_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("semget syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("semget syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5833,7 +7100,12 @@ int sys_semop_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("semop syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("semop syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5854,7 +7126,12 @@ int sys_semtimedop_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("semtimedop syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("semtimedop syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5875,7 +7152,12 @@ int sys_sendfile64_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("sendfile64 syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("sendfile64 syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5896,7 +7178,12 @@ int sys_sendmmsg_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("sendmmsg syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("sendmmsg syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5917,7 +7204,12 @@ int sys_sendmsg_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("sendmsg syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("sendmsg syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5938,7 +7230,12 @@ int sys_sendto_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("sendto syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("sendto syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5959,7 +7256,12 @@ int sys_setdomainname_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("setdomainname syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("setdomainname syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -5980,7 +7282,12 @@ int sys_setfsgid_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("setfsgid syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("setfsgid syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6001,7 +7308,12 @@ int sys_setfsuid_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("setfsuid syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("setfsuid syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6022,7 +7334,12 @@ int sys_setgid_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("setgid syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("setgid syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6043,7 +7360,12 @@ int sys_setgroups_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("setgroups syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("setgroups syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6064,7 +7386,12 @@ int sys_sethostname_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("sethostname syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("sethostname syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6085,7 +7412,12 @@ int sys_setitimer_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("setitimer syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("setitimer syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6106,7 +7438,12 @@ int sys_set_mempolicy_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("set_mempolicy syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("set_mempolicy syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6127,7 +7464,12 @@ int sys_set_mempolicy_home_node_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("set_mempolicy_home_node syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("set_mempolicy_home_node syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6148,7 +7490,12 @@ int sys_setns_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("setns syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("setns syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6169,7 +7516,12 @@ int sys_setpgid_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("setpgid syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("setpgid syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6190,7 +7542,12 @@ int sys_setpriority_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("setpriority syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("setpriority syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6211,7 +7568,12 @@ int sys_setregid_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("setregid syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("setregid syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6232,7 +7594,12 @@ int sys_setresgid_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("setresgid syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("setresgid syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6253,7 +7620,12 @@ int sys_setresuid_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("setresuid syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("setresuid syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6274,7 +7646,12 @@ int sys_setreuid_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("setreuid syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("setreuid syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6295,7 +7672,12 @@ int sys_setrlimit_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("setrlimit syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("setrlimit syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6316,7 +7698,12 @@ int sys_set_robust_list_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("set_robust_list syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("set_robust_list syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6337,7 +7724,12 @@ int sys_setsid_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("setsid syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("setsid syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6358,7 +7750,12 @@ int sys_setsockopt_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("setsockopt syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("setsockopt syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6379,7 +7776,12 @@ int sys_set_tid_address_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("set_tid_address syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("set_tid_address syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6400,7 +7802,12 @@ int sys_settimeofday_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("settimeofday syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("settimeofday syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6421,7 +7828,12 @@ int sys_setuid_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("setuid syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("setuid syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6442,7 +7854,12 @@ int sys_setxattr_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("setxattr syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("setxattr syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6463,7 +7880,12 @@ int sys_shmat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("shmat syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("shmat syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6484,7 +7906,12 @@ int sys_shmctl_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("shmctl syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("shmctl syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6505,7 +7932,12 @@ int sys_shmdt_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("shmdt syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("shmdt syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6526,7 +7958,12 @@ int sys_shmget_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("shmget syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("shmget syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6547,7 +7984,12 @@ int sys_shutdown_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("shutdown syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("shutdown syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6568,7 +8010,12 @@ int sys_sigaltstack_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("sigaltstack syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("sigaltstack syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6589,7 +8036,12 @@ int sys_signalfd_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("signalfd syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("signalfd syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6610,7 +8062,12 @@ int sys_signalfd4_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("signalfd4 syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("signalfd4 syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6631,7 +8088,12 @@ int sys_socket_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("socket syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("socket syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6652,7 +8114,12 @@ int sys_socketpair_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("socketpair syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("socketpair syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6673,7 +8140,12 @@ int sys_splice_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("splice syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("splice syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6694,7 +8166,12 @@ int sys_statfs_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("statfs syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("statfs syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6715,7 +8192,12 @@ int sys_statx_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("statx syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("statx syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6736,7 +8218,12 @@ int sys_swapoff_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("swapoff syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("swapoff syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6757,7 +8244,12 @@ int sys_swapon_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("swapon syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("swapon syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6778,7 +8270,12 @@ int sys_symlink_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("symlink syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("symlink syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6799,7 +8296,12 @@ int sys_symlinkat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("symlinkat syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("symlinkat syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6820,7 +8322,12 @@ int sys_sync_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("sync syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("sync syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6841,7 +8348,12 @@ int sys_sync_file_range_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("sync_file_range syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("sync_file_range syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6862,7 +8374,12 @@ int sys_syncfs_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("syncfs syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("syncfs syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6883,7 +8400,12 @@ int sys_sysfs_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("sysfs syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("sysfs syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6904,7 +8426,12 @@ int sys_sysinfo_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("sysinfo syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("sysinfo syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6925,7 +8452,12 @@ int sys_syslog_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("syslog syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("syslog syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6946,7 +8478,12 @@ int sys_tee_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("tee syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("tee syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6967,7 +8504,12 @@ int sys_tgkill_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("tgkill syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("tgkill syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -6988,7 +8530,12 @@ int sys_time_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("time syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("time syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7009,7 +8556,12 @@ int sys_timer_create_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("timer_create syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("timer_create syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7030,7 +8582,12 @@ int sys_timer_delete_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("timer_delete syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("timer_delete syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7051,7 +8608,12 @@ int sys_timerfd_create_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("timerfd_create syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("timerfd_create syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7072,7 +8634,12 @@ int sys_timerfd_gettime_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("timerfd_gettime syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("timerfd_gettime syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7093,7 +8660,12 @@ int sys_timerfd_settime_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("timerfd_settime syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("timerfd_settime syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7114,7 +8686,12 @@ int sys_timer_getoverrun_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("timer_getoverrun syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("timer_getoverrun syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7135,7 +8712,12 @@ int sys_timer_gettime_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("timer_gettime syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("timer_gettime syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7156,7 +8738,12 @@ int sys_timer_settime_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("timer_settime syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("timer_settime syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7177,7 +8764,12 @@ int sys_times_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("times syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("times syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7198,7 +8790,12 @@ int sys_tkill_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("tkill syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("tkill syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7219,7 +8816,12 @@ int sys_truncate_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("truncate syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("truncate syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7240,7 +8842,12 @@ int sys_umask_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("umask syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("umask syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7261,7 +8868,12 @@ int sys_umount_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("umount syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("umount syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7282,7 +8894,12 @@ int sys_unlink_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("unlink syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("unlink syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7303,7 +8920,12 @@ int sys_unlinkat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("unlinkat syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("unlinkat syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7324,7 +8946,12 @@ int sys_unshare_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("unshare syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("unshare syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7345,7 +8972,12 @@ int sys_userfaultfd_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("userfaultfd syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("userfaultfd syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7366,7 +8998,12 @@ int sys_ustat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("ustat syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("ustat syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7387,7 +9024,12 @@ int sys_utime_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("utime syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("utime syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7408,7 +9050,12 @@ int sys_utimensat_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("utimensat syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("utimensat syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7429,7 +9076,12 @@ int sys_utimes_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("utimes syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("utimes syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7450,7 +9102,12 @@ int sys_vfork_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("vfork syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("vfork syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7471,7 +9128,12 @@ int sys_vhangup_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("vhangup syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("vhangup syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7492,7 +9154,12 @@ int sys_vmsplice_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("vmsplice syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("vmsplice syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7513,7 +9180,12 @@ int sys_wait4_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("wait4 syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("wait4 syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7534,7 +9206,12 @@ int sys_waitid_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("waitid syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("waitid syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7555,7 +9232,12 @@ int sys_write_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("write syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("write syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
@@ -7576,2572 +9258,12 @@ int sys_writev_callback(struct trace_event_raw_sys_enter* ctx)
 	u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
 	if(!is_container_process)
 		return 0;
-	bpf_printk("writev syscall triggered for pidns %u", pidns);
+	//if(!ctx) {
+		//bpf_printk("ctx is null");
+		//return 0;}
+	//u64 id = ctx->id;
+	//bpf_printk("writev syscall triggered for syscall num %u", id);
+	//set_syscall_map(id);
 	return 0;
 }
 
-
-
-
-
-
-/*mmap*/
-/*mprotect*/
-/*pread64*/
-/*pwrite64*/
-/*readv*/
-/*writev*/
-/*shmat*/
-/*sendfile*/
-/*socket*/
-/*connect*/
-/*accept*/
-/*sendto*/
-/*recvfrom*/
-/*sendmsg*/
-/*recvmsg*/
-/*shutdown*/
-/*bind*/
-/*listen*/
-/*getpeername*/
-/*socketpair*/
-/*setsockopt*/
-/*clone*/
-/*fork*/
-/*vfork*/
-/*execve*/
-/*fcntl*/
-/*ftruncate*/
-/*rename*/
-/*mkdir*/
-/*rmdir*/
-/*creat*/
-/*link*/
-/*unlink*/
-/*symlink*/
-/*chmod*/
-/*fchmod*/
-/*chown*/
-/*fchown*/
-/*lchown*/
-/*ptrace*/
-/*syslog*/
-/*setuid*/
-/*setgid*/
-/*setpgid*/
-/*getpgrp*/
-/*setreuid*/
-/*setregid*/
-/*setgroups*/
-/*setresuid*/
-/*setresgid*/
-/*getsid*/
-/*capget*/
-/*capset*/
-/*mknod*/
-/*ustat*/
-/*statfs*/
-/*fstatfs*/
-/*pivot_root*/
-/*chroot*/
-/*settimeofday*/
-/*swapon*/
-/*swapoff*/
-/*acct*/
-/*quotactl*/
-/*io_setup*/
-/*remap_file_pages*/
-/*clock_settime*/
-/*inotify_add_watch*/
-/*openat*/
-/*mkdirat*/
-/*fchownat*/
-/*renameat*/
-/*linkat*/
-/*symlinkat*/
-/*fchmodat*/
-/*unshare*/
-/*fallocate*/
-/*accept4*/
-/*preadv*/
-/*pwritev*/
-/*recvmmsg*/
-/*fanotify_mark*/
-/*open_by_handle_at*/
-/*sendmmsg*/
-/*setns*/
-/*renameat2*/
-/*execveat*/
-/*copy_file_range*/
-/*preadv2*/
-/*pwritev2*/
-/*pkey_mprotect*/
-/*io_uring_setup*/
-/*move_mount*/
-/*fsconfig*/
-/*fsmount*/
-
-
-
-
-/*
-    LSM Hooks
-        task_alloc
-        bprm_check_security
-        ptrace_access_check
-        path_chmod
-        file_mprotect
-        task_fix_setgid
-        task_fix_setuid
-        socket_accept
-        sock_bind
-        sock_connect
-        socket_listen
-        socket_recvmsg
-        sock_create
-*/
-
-// SEC("lsm/file_permission")
-// int BPF_PROG(file_permission, struct file *file, int mask){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, FILE_PERMISSION); //For each name space there is only one syscall associated with it?
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, FILE_PERMISSION, 0);
-//     if(init_failed)
-//         return 0;
-
-//     bpf_printk("file_permission triggered with syscall number %d and comm %s", syscall, comm);
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         bpf_printk("file_permission triggered! policy allowed");
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-// SEC("lsm/task_alloc")
-// int BPF_PROG(task_alloc, struct task_struct *task, unsigned long clone_flags, int ret){
-//     if (ret != 0)
-//         return ret;
-
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *process_task = (struct task_struct*)bpf_get_current_task();
-//     if(!process_task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(process_task);
-//     u32 mntns = getMntInum(process_task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, TASK_ALLOC);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, TASK_ALLOC, 0);
-//     if(init_failed)
-//         return 0;
-//     bpf_printk("task_alloc LSM Hook triggered! clone_flags = %u", clone_flags);
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         bpf_printk("task_alloc triggered! policy allowed");
-//         return 0;
-//     }
-//     bpf_printk("task_alloc triggered! policy blocked");
-//     struct pid_syscall_args key;
-//     key.syscall = syscall;
-//     key.namespace = ns;
-//     u32 *flag = bpf_map_lookup_elem(&policy_params_task_alloc, &key);
-//     if(flag){
-//         for(int i = 0; i < 16; i++){
-//             if(flag[i] == 0)
-//                 break;
-//             if(flag[i] == clone_flags){
-//                 return 0;
-//             }
-//         }
-//     }
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-
-//     return -EPERM;
-// }
-
-// SEC("lsm/bprm_check_security")
-// int BPF_PROG(bprm_check, struct linux_binprm *bprm, int ret){
-//     if (ret != 0)
-//         return ret;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, BPRM_CHECK_SECURITY);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, BPRM_CHECK_SECURITY, 0);
-//     if(init_failed)
-//         return 0;
-    
-//     u8 filename[MAX_PATH_LEN];
-//     bpf_core_read_str(&filename, sizeof(filename), bprm->filename);
-//     bpf_printk("bprm_check_security LSM Hook triggered! filename = %s", filename);
-
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy)
-//         return 0;
-    
-//     struct pid_syscall_args key;
-//     key.syscall = syscall;
-//     key.namespace = ns;
-//     // bool is_empty = false;
-//     u32 is_allowed = 1;
-//     char *filepath = bpf_map_lookup_elem(&policy_params_bprm_check, &key);
-//     if(filepath){
-//         for(int i = 0; i < 16; i++){
-//             if(filepath[i * MAX_PATH_LEN] != '/')
-//                 break;
-//             is_allowed = 1;
-//             for(int j = 0; j < MAX_PATH_LEN; j++){
-//                 // if(!filepath || !(bprm->filename)){
-//                 //     if(!j)
-//                 //         is_empty = true;
-//                 //     break;
-//                 // }
-//                 if(filepath[i * MAX_PATH_LEN + j] == '\0'){
-//                     is_allowed = 0;
-//                     // if(!j)
-//                     //     is_empty = true;
-//                     break;
-//                 }
-//                 if(filename[j] == '\0'){
-//                     // if(!j)
-//                     //     is_empty = true;
-//                     // is_allowed = 0;
-//                     break;
-//                 }
-//                 if(filepath[i * MAX_PATH_LEN + j] != filename[j]){
-//                     is_allowed = 0;
-//                     break;
-//                 }
-//             }
-//             if(is_allowed)
-//                 return 0;
-//         }
-//     }
-        
-    
-    
-//     if (is_allowed) {
-//         u32 pid = bpf_get_current_pid_tgid() >> 32;
-//         bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-        
-//         struct event *new_event = NULL;
-//         new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//         if (new_event == NULL) {
-//             return 0;
-//         }
-//         new_event->pid = pid;
-//         for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//         bpf_ringbuf_submit(new_event, 0);
-
-//         return -EPERM;
-//     }
-    
-//     return 0;
-// }
-
-// SEC("lsm/ptrace_access_check")
-// int BPF_PROG(ptrace_check, struct task_struct *child, unsigned int mode, int ret){
-//     if (ret != 0)
-//         return ret;
-
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, PTRACE_ACCESS_CHECK);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, PTRACE_ACCESS_CHECK, 0);
-//     if(init_failed)
-//         return 0;
-//     bpf_printk("ptrace_access_check LSM Hook triggered! mode = %u", mode);
-
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy)
-//         return 0;
-
-//     struct pid_syscall_args key;
-//     key.syscall = syscall;
-//     key.namespace = ns;
-//     u8 *allow_policy = bpf_map_lookup_elem(&policy_params_ptrace_access, &key);
-//     if(allow_policy && mode){
-//         for(int i = 0; i < 16; i++){
-//             if(allow_policy[i] == 0)
-//                 break;
-//             if((allow_policy[i] & mode) == mode){
-//                 return 0;
-//             }
-//         }
-//     }
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-//     // Create event, we are going to send this over to userspace.
-    
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-
-//     return -EPERM;
-    
-//     return 0;
-// }
-
-// SEC("lsm/path_chmod")
-// int BPF_PROG(path_chmod, struct path *path, umode_t mode, int ret){
-//     if (ret != 0)
-//         return ret;
-
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     bpf_printk("path_chmod triggered! in container process");
-//     if(*is_container_process){
-//         u32 syscall = lookup_syscall(ns, PATH_CHMOD);
-        
-//         u32 init_failed = set_syscall_map(pidns, mntns, PATH_CHMOD, 0);
-//         if(init_failed)
-//             return 0;
-//         struct pid_syscall_args key;
-//         key.syscall = syscall;
-//         key.namespace = ns;
-//         bpf_printk("path_chmod #1");
-//         ///
-//         u8 global_path_buf[MAX_PATH_LEN];
-
-//         struct dentry *d = path->dentry;
-//         int top = 0;
-//         if(!d)
-//             return 0;
-//         // Reset global buffer
-//         for (int i = 0; i < MAX_PATH_LEN; i++)
-//             global_path_buf[i] = '\0';
-//         bpf_printk("path_chmod #2");
-
-//         for(int j = 0; j < 10; j++) {
-//             if(d == d->d_parent || top >= MAX_PATH_LEN - 1 || !d)
-//                 break;
-            
-//             u8 name_tmp[MAX_PATH_LEN];
-//             bpf_core_read_str(&name_tmp, sizeof(name_tmp), d->d_name.name);
-//             int len = 0;
-//             while (name_tmp[len] != '\0' && len < MAX_PATH_LEN - 2) {
-//                 len++;
-//             }
-//             if(len < 1)
-//                 return 0;
-//             bpf_printk("path_chmod #2-1 d_name.name : %s", name_tmp);
-//             for (int i = len - 1; i >= 0 && top < MAX_PATH_LEN - 2; i--) {
-//                 global_path_buf[top++] = name_tmp[i];
-//             }
-//             if (top < MAX_PATH_LEN - 1) {
-//                 global_path_buf[top++] = '/';
-//             }
-//             d = d->d_parent;
-//         }
-
-//         bpf_printk("path_chmod #3");
-//         // Reverse the whole path
-//         for (int i = 0; i < top / 2; i++) {
-//             u8 temp = global_path_buf[i];
-//             global_path_buf[i] = global_path_buf[top - 1 - i];
-//             global_path_buf[top - 1 - i] = temp;
-//         }
-//         ///
-//         bpf_printk("path_chmod #3-1 global_path_buf : %s", global_path_buf);
-
-//         u32 policy = lookup_policy(pidns, mntns, syscall);
-//         if(!policy){
-//             bpf_printk("path_chmod triggered! policy allowed");
-//             return 0;
-//         }
-//         char *chmod_allow = bpf_map_lookup_elem(&policy_params_path_chmod, &key);
-//         if(chmod_allow){
-//             int is_allowed = 1;
-//             for(int i = 0; i < 16; i++){
-//                 if(chmod_allow[i * (MAX_PATH_LEN + 2)] != '/')
-//                     break;
-//                 is_allowed = 1;
-//                 u16 policy_mode = (((u16)(chmod_allow[i * (MAX_PATH_LEN + 2) + 16]) & 0x00FF) << 8) | ((u16)(chmod_allow[i * (MAX_PATH_LEN + 2) + 17]) & 0x00FF);
-//                 bpf_printk("policy_mode : %d", policy_mode);
-//                 for(int j = 0; j < MAX_PATH_LEN; j++){
-//                     if(chmod_allow[i * (MAX_PATH_LEN + 2) + j] == '\0')
-//                         is_allowed = 0;
-//                         break;
-//                     if(global_path_buf[j] == '\0'){
-//                         break;
-//                     }
-//                     if(chmod_allow[i * (MAX_PATH_LEN + 2) + j] != global_path_buf[j]){
-//                         is_allowed = 0;
-//                         break;
-//                     }
-//                 }
-//                 if(is_allowed){
-//                     if(policy_mode == mode)
-//                         return 0;
-//                     if(policy_mode == 65535)
-//                         return 0;
-//                 }
-//             }
-//         }
-
-//         ///
-//         u32 pid = bpf_get_current_pid_tgid() >> 32;
-//         bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-//         // Create event, we are going to send this over to userspace.
-        
-//         struct event *new_event = NULL;
-//         new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//         if (new_event == NULL) {
-//             return 0;
-//         }
-//         new_event->pid = pid;
-//         for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//         bpf_ringbuf_submit(new_event, 0);
-
-//         return -EPERM;
-//     }
-//     return 0;
-// }
-
-// SEC("lsm/file_mprotect")
-// int BPF_PROG(file_mprotect, struct vm_area_struct *vma, unsigned long reqprot, unsigned long prot, int ret){
-//     if (ret != 0)
-//         return ret;
-
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-    
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, FILE_MPROTECT);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, FILE_MPROTECT, 0);
-//     if(init_failed)
-//         return 0;
-//     bpf_printk("file_mprotect LSM Hook triggered! prot = %u, reqprot = %u", prot, reqprot);
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy)
-//         return 0;
-    
-//     struct pid_syscall_args psa;
-//     psa.syscall = syscall;
-//     psa.namespace = ns;
-//     u32 *arr = bpf_map_lookup_elem(&policy_params_file_mprotect, &psa);
-//     if(!arr){
-//         for(int i = 0; i < 8; i++){
-//             if(!arr[i*2] && !arr[i*2 + 1])
-//                 break;
-//             if(arr[i*2] == 0xFFFFFFFF){
-//                 if(arr[i*2 + 1] == 0xFFFFFFFF){
-//                     return 0;
-//                 }
-//                 else if(arr[i*2 + 1] == prot){
-//                     return 0;
-//                 }
-//             }
-//             else if(arr[i*2 + 1] == 0xFFFFFFFF){
-//                 if(arr[i*2] == reqprot){
-//                     return 0;
-//                 }
-//             }
-//             else if(arr[i*2] == reqprot && arr[i*2 + 1] == prot){
-//                 return 0;
-//             }
-//         }
-//     }
-    
-
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-//     // Create event, we are going to send this over to userspace.
-    
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-
-//     return -EPERM;
-// }
-
-// SEC("lsm/task_fix_setgid")
-// int BPF_PROG(fix_setgid, struct cred *new, const struct cred *old, int flags, int ret){
-//     if (ret != 0)
-//         return ret;
-
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, TASK_FIX_SETGID);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, TASK_FIX_SETGID, 0);
-//     if(init_failed)
-//         return 0;
-//     bpf_printk("task_fix_setgid LSM Hook triggered! uid = %u, euid = %u, suid = %u", new->gid.val, new->egid.val, new->sgid.val);
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy)
-//         return 0;
-//     struct pid_syscall_args psa;
-//     psa.syscall = syscall;
-//     psa.namespace = ns;
-
-//     u32 *arr = bpf_map_lookup_elem(&policy_params_fix_setgid, &psa);
-//     if(arr){
-//         for(int i = 0; i < 8; i++){
-//             if(arr[i*3 + 2] == 0xFFFFFFFF){
-//                 if(arr[i*3 + 1] == 0xFFFFFFFF){
-//                     if(arr[i*3] == 0xFFFFFFFF){
-//                         return 0;
-//                     }
-//                     else if(arr[i*3] == new->gid.val){
-//                         return 0;
-//                     }
-//                 }
-//                 else if(arr[i*3 + 1] == new->egid.val){
-//                     if(arr[i*3] == 0xFFFFFFFF){
-//                         return 0;
-//                     }
-//                     else if(arr[i*3] == new->gid.val){
-//                         return 0;
-//                     }
-//                 }
-//             }
-//             else if(arr[i*3 + 2] == new->sgid.val){
-//                 if(arr[i*3 + 1] == 0xFFFFFFFF){
-//                     if(arr[i*3] == 0xFFFFFFFF){
-//                         return 0;
-//                     }
-//                     else if(arr[i*3] == new->gid.val){
-//                         return 0;
-//                     }
-//                 }
-//                 else if(arr[i*3 + 1] == new->egid.val){
-//                     if(arr[i*3] == 0xFFFFFFFF){
-//                         return 0;
-//                     }
-//                     else if(arr[i*3] == new->gid.val){
-//                         return 0;
-//                     }
-//                 }
-//             }
-//         }
-//     }
-    
-
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-//     // Create event, we are going to send this over to userspace.
-    
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-
-//     return -EPERM;
-// }
-
-// SEC("lsm/task_fix_setuid")
-// int BPF_PROG(fix_setuid, struct cred *new, const struct cred *old, int flags, int ret){
-//     if (ret != 0)
-//         return ret;
-
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-    
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, TASK_FIX_SETUID);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, TASK_FIX_SETUID, 0);
-//     if(init_failed)
-//         return 0;
-//     bpf_printk("task_fix_setuid LSM Hook triggered! uid = %u, euid = %u, suid = %u", new->uid.val, new->euid.val, new->suid.val);
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy)
-//         return 0;
-
-//     struct pid_syscall_args psa;
-//     psa.syscall = syscall;
-//     psa.namespace = ns;
-
-//     u32 *arr = bpf_map_lookup_elem(&policy_params_fix_setuid, &psa);
-//     if(arr){
-//         for(int i = 0; i < 8; i++){
-//             if(arr[i*3 + 2] == 0xFFFFFFFF){
-//                 if(arr[i*3 + 1] == 0xFFFFFFFF){
-//                     if(arr[i*3] == 0xFFFFFFFF){
-//                         return 0;
-//                     }
-//                     else if(arr[i*3] == new->uid.val){
-//                         return 0;
-//                     }
-//                 }
-//                 else if(arr[i*3 + 1] == new->euid.val){
-//                     if(arr[i*3] == 0xFFFFFFFF){
-//                         return 0;
-//                     }
-//                     else if(arr[i*3] == new->uid.val){
-//                         return 0;
-//                     }
-//                 }
-//             }
-//             else if(arr[i*3 + 2] == new->suid.val){
-//                 if(arr[i*3 + 1] == 0xFFFFFFFF){
-//                     if(arr[i*3] == 0xFFFFFFFF){
-//                         return 0;
-//                     }
-//                     else if(arr[i*3] == new->uid.val){
-//                         return 0;
-//                     }
-//                 }
-//                 else if(arr[i*3 + 1] == new->euid.val){
-//                     if(arr[i*3] == 0xFFFFFFFF){
-//                         return 0;
-//                     }
-//                     else if(arr[i*3] == new->uid.val){
-//                         return 0;
-//                     }
-//                 }
-//             }
-//         }
-//     }
-    
-
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-//     // Create event, we are going to send this over to userspace.
-    
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-
-//     return -EPERM;
-// }
-
-// SEC("lsm/socket_accept")
-// int BPF_PROG(socket_accept, struct socket *sock, struct socket *newsock, int ret){
-//     if (ret != 0)
-//         return ret;
-
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, SOCKET_ACCEPT);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_ACCEPT, 0);
-//     if(init_failed)
-//         return 0;
-//     // u32 policy = lookup_policy(pidns, mntns, syscall);
-//     // if(!policy)
-//     //     return 0;
-//     u32 ip_dest = sock->sk->__sk_common.skc_daddr;
-//     u32 port_dest = (u32)(sock->sk->__sk_common.skc_dport);
-//     u32 proto_dest = (u32)(sock->sk->sk_protocol);
-//     bpf_printk("socket_accept LSM Hook triggered! ip_dest = %u, port_dest = %u", ip_dest, port_dest);
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy)
-//         return 0;
-//     struct pid_syscall_args psa;
-//     psa.syscall = syscall;
-//     psa.namespace = ns;
-
-//     u32 *arr = bpf_map_lookup_elem(&policy_params_socket_accept, &psa);
-//     if(arr){
-//         u16 flag = 0;
-//         u32 policy_ip, policy_port, policy_proto;
-//         for(int i = 0 ; i < 8; i++){
-//             if(!arr[i * 3]&& !arr[i * 3 + 1] && !arr[i*3 + 2]){
-//                 break;
-//             }
-//             policy_ip = arr[i*3];
-//             policy_port = arr[i*3 + 1] & 0x0000FFFF;
-//             policy_proto = arr[i*3 + 2];
-//             flag = arr[i*3 + 1] >> 16;
-            
-//             if(flag == 0x00){
-//                 if(policy_ip == ip_dest && policy_port == port_dest && policy_proto == proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xfe){
-//                 if(!ip_dest && !port_dest && !proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xfd){
-//                 if(policy_port == port_dest && policy_proto == proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xfb){
-//                 if(policy_ip == ip_dest && policy_proto == proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xf7){
-//                 if(policy_ip == ip_dest && policy_port == port_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xef){
-//                 if(policy_proto == proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xdf){
-//                 if(policy_port == port_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xbf){
-//                 if(policy_ip == ip_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0x7f){
-//                 return 0;
-//             }
-//         } 
-//     }
-//     ///
-    
-    
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-//     // Create event, we are going to send this over to userspace.
-    
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-
-//     return -EPERM;
-// } 
-
-// SEC("lsm/socket_bind")
-// int BPF_PROG(socket_bind, struct socket *sock, struct sockaddr *address, int addrlen, int ret){
-//     if (ret != 0)
-//         return ret;
-
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     bpf_printk("bind triggered!");
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     bpf_printk("Check if container process");
-//     if(!is_container_process)
-//         return 0;
-//     bpf_printk("bind triggered2!");
-//     u32 syscall = lookup_syscall(ns, SOCKET_BIND);
-//     u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_BIND, 0);
-//     if(init_failed)
-//         return 0;
-//     bpf_printk("bind triggered!3");
-//     struct sockaddr_in *addr = (struct sockaddr_in *)address;
-//     if(!addr)
-//         return 0;
-//     u32 ip_dest = addr->sin_addr.s_addr;
-//     u32 port_dest = (u32)(addr->sin_port);
-//     u32 proto_dest = (u32)(sock->sk->sk_protocol);
-//     bpf_printk("socket_bind LSM Hook triggered! ip_dest = %u, port_dest = %u", ip_dest, port_dest);
-//     if (address->sa_family != AF_INET)
-//     {
-//         return 0;
-//     }
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy)
-//         return 0;
-//     struct pid_syscall_args psa;
-//     psa.syscall = syscall;
-//     psa.namespace = ns;
-
-//     u32 *arr = bpf_map_lookup_elem(&policy_params_socket_bind, &psa);
-//     if(arr){
-//         u16 flag = 0;
-//         u32 policy_ip, policy_port, policy_proto;
-//         for(int i = 0 ; i < 8; i++){
-//             if(!arr[i * 3]&& !arr[i * 3 + 1] && !arr[i*3 + 2]){
-//                 break;
-//             }
-//             policy_ip = arr[i*3];
-//             policy_port = arr[i*3 + 1] & 0x0000FFFF;
-//             policy_proto = arr[i*3 + 2];
-//             flag = arr[i*3 + 1] >> 16;
-            
-//             if(flag == 0x00){
-//                 if(policy_ip == ip_dest && policy_port == port_dest && policy_proto == proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xfe){
-//                 if(!ip_dest && !port_dest && !proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xfd){
-//                 if(policy_port == port_dest && policy_proto == proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xfb){
-//                 if(policy_ip == ip_dest && policy_proto == proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xf7){
-//                 if(policy_ip == ip_dest && policy_port == port_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xef){
-//                 if(policy_proto == proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xdf){
-//                 if(policy_port == port_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xbf){
-//                 if(policy_ip == ip_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0x7f){
-//                 return 0;
-//             }
-//         }
-//     }
-//     ///
-    
-    
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-//     // Create event, we are going to send this over to userspace.
-    
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-
-//     return -EPERM;
-// }
-
-// SEC("lsm/socket_connect")
-// int BPF_PROG(socket_connect, struct socket *sock, struct sockaddr *address, int addrlen, int ret){
-//     if (ret != 0)
-//         return ret;
-
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, SOCKET_CONNECT);
-//     u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_CONNECT, 0);
-//     bpf_printk("socket_connect triggered! syscall : %d, ret : %d", syscall, ret);
-//     if(init_failed)
-//         return 0;
-//     if (address->sa_family != AF_INET)
-//     {
-//         return 0;
-//     }
-//     struct sockaddr_in *addr = (struct sockaddr_in *)address;
-//     if(!addr)
-//         return 0;
-//     u32 ip_dest = addr->sin_addr.s_addr;
-//     u32 port_dest = (u32)(addr->sin_port);
-//     u32 proto_dest = (u32)(sock->sk->sk_protocol);
-//     bpf_printk("socket_connect LSM Hook triggered! ip_dest = %d, port_dest = %d", ip_dest, port_dest);
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy)
-//         return 0;
-//     struct pid_syscall_args psa;
-//     psa.syscall = syscall;
-//     psa.namespace = ns;
-
-//     u32 *arr = bpf_map_lookup_elem(&policy_params_socket_connect, &psa);
-//     if(!arr){
-//         u16 flag = 0;
-//         u32 policy_ip, policy_port, policy_proto;
-//         for(int i = 0 ; i < 8; i++){
-//             if(!arr[i * 3]&& !arr[i * 3 + 1] && !arr[i*3 + 2]){
-//                 break;
-//             }
-//             policy_ip = arr[i*3];
-//             policy_port = arr[i*3 + 1] & 0x0000FFFF;
-//             policy_proto = arr[i*3 + 2];
-//             flag = arr[i*3 + 1] >> 16;
-            
-//             if(flag == 0x00){
-//                 if(policy_ip == ip_dest && policy_port == port_dest && policy_proto == proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xfe){
-//                 if(!ip_dest && !port_dest && !proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xfd){
-//                 if(policy_port == port_dest && policy_proto == proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xfb){
-//                 if(policy_ip == ip_dest && policy_proto == proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xf7){
-//                 if(policy_ip == ip_dest && policy_port == port_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xef){
-//                 if(policy_proto == proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xdf){
-//                 if(policy_port == port_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xbf){
-//                 if(policy_ip == ip_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0x7f){
-//                 return 0;
-//             }
-//         }   
-        
-//     }
-//     ///
-    
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-//     // Create event, we are going to send this over to userspace.
-    
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-
-//     return -EPERM;
-// }
-
-// SEC("lsm/socket_listen")
-// int BPF_PROG(socket_listen, struct socket *sock, int backlog, int ret){
-//     if (ret != 0)
-//         return ret;
-
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, SOCKET_LISTEN);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_LISTEN, 0);
-//     if(init_failed)
-//         return 0;
-//     // u32 policy = lookup_policy(pidns, mntns, syscall);
-//     // if(!policy)
-//     //     return 0;
-//     u32 ip_dest = sock->sk->__sk_common.skc_daddr;
-//     u32 port_dest = (u32)(sock->sk->__sk_common.skc_dport);
-//     u32 proto_dest = (u32)(sock->sk->sk_protocol);
-//     bpf_printk("socket_listen LSM Hook triggered! ip_dest = %u, port_dest = %u", ip_dest, port_dest);
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy)
-//         return 0;
-//     struct pid_syscall_args psa;
-//     psa.syscall = syscall;
-//     psa.namespace = ns;
-
-//     u32 *arr = bpf_map_lookup_elem(&policy_params_socket_listen, &psa);
-//     if(arr){
-//         u16 flag = 0;
-//         u32 policy_ip, policy_port, policy_proto;
-//         for(int i = 0 ; i < 8; i++){
-//             if(!arr[i * 3]&& !arr[i * 3 + 1] && !arr[i*3 + 2]){
-//                 break;
-//             }
-//             policy_ip = arr[i*3];
-//             policy_port = arr[i*3 + 1] & 0x0000FFFF;
-//             policy_proto = arr[i*3 + 2];
-//             flag = arr[i*3 + 1] >> 16;
-            
-//             if(flag == 0x00){
-//                 if(policy_ip == ip_dest && policy_port == port_dest && policy_proto == proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xfe){
-//                 if(!ip_dest && !port_dest && !proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xfd){
-//                 if(policy_port == port_dest && policy_proto == proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xfb){
-//                 if(policy_ip == ip_dest && policy_proto == proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xf7){
-//                 if(policy_ip == ip_dest && policy_port == port_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xef){
-//                 if(policy_proto == proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xdf){
-//                 if(policy_port == port_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xbf){
-//                 if(policy_ip == ip_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0x7f){
-//                 return 0;
-//             }
-//         }   
-//     }
-//     ///
-    
-
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-//     // Create event, we are going to send this over to userspace.
-    
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-
-//     return -EPERM;
-// }
-
-// SEC("lsm/socket_recvmsg")
-// int BPF_PROG(socket_recvmsg, struct socket *sock, struct msghdr *msg, int size, int flags, int ret){
-//     if (ret != 0)
-//         return ret;
-
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, SOCKET_RECVMSG);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_RECVMSG, 0);
-//     if(init_failed)
-//         return 0;
-//     // u32 policy = lookup_policy(pidns, mntns, syscall);
-//     // if(!policy)
-//     //     return 0;
-//     u32 ip_dest = sock->sk->__sk_common.skc_daddr;
-//     u32 port_dest = (u32)(sock->sk->__sk_common.skc_dport);
-//     u32 proto_dest = (u32)(sock->sk->sk_protocol);
-//     bpf_printk("socket_recvmsg LSM Hook triggered! ip_dest = %u, port_dest = %u", ip_dest, port_dest);
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy)
-//         return 0;
-//     struct pid_syscall_args psa;
-//     psa.syscall = syscall;
-//     psa.namespace = ns;
-
-//     u32 *arr = bpf_map_lookup_elem(&policy_params_socket_recvmsg, &psa);
-//     if(arr){
-//         u16 flag = 0;
-//         u32 policy_ip, policy_port, policy_proto;
-//         for(int i = 0 ; i < 8; i++){
-//             if(!arr[i * 3]&& !arr[i * 3 + 1] && !arr[i*3 + 2]){
-//                 break;
-//             }
-//             policy_ip = arr[i*3];
-//             policy_port = arr[i*3 + 1] & 0x0000FFFF;
-//             policy_proto = arr[i*3 + 2];
-//             flag = arr[i*3 + 1] >> 16;
-            
-//             if(flag == 0x00){
-//                 if(policy_ip == ip_dest && policy_port == port_dest && policy_proto == proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xfe){
-//                 if(!ip_dest && !port_dest && !proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xfd){
-//                 if(policy_port == port_dest && policy_proto == proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xfb){
-//                 if(policy_ip == ip_dest && policy_proto == proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xf7){
-//                 if(policy_ip == ip_dest && policy_port == port_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xef){
-//                 if(policy_proto == proto_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xdf){
-//                 if(policy_port == port_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0xbf){
-//                 if(policy_ip == ip_dest){
-//                     return 0;
-//                 }
-//             }
-//             else if(flag == 0x7f){
-//                 return 0;
-//             }
-//         }
-//     }
-//     ///
-       
-
-    
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-//     // Create event, we are going to send this over to userspace.
-    
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-
-//     return -EPERM;
-// }
-
-// SEC("lsm/socket_create")
-// int BPF_PROG(socket_create, int family, int type, int protocol, int kern, int ret){
-//     if (ret != 0)
-//         return ret;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, SOCKET_CREATE);
-
-//     u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_CREATE, 0);
-//     if(init_failed)
-//         return 0;
-//     bpf_printk("socket_create LSM Hook triggered! protocol = %u, type = %u", protocol, type);
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy)
-//         return 0;
-//     struct pid_syscall_args psa;
-//     psa.syscall = syscall;
-//     psa.namespace = ns;
-
-//     u32 *arr = bpf_map_lookup_elem(&policy_params_socket_create, &psa);
-//     if(arr){
-//         for(int i = 0; i < 8; i++){
-//         if(!arr[i*2] && !arr[i*2 + 1])
-//             break;
-//         else if(arr[i*2] == 7){
-//             if(arr[i*2 + 1] == protocol){
-//                 return 0;
-//             }
-//             else if(arr[i*2 + 1] == 7){
-//                 return 0;
-//             }
-//         }
-//         else if(arr[i*2 + 1] == 7){
-//             if(arr[i * 2] == type){
-//                 return 0;
-//             }
-//         }
-//             else if(arr[i*2] == type && arr[i*2 + 1] == protocol){
-//                 return 0;
-//             }
-//         }
-//     }
-
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     bpf_printk("lsm: detected PID: %d, comm: %s - blocked PID", pid, comm);
-//     // Create event, we are going to send this over to userspace.
-    
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-
-//     return -EPERM;
-// }
-
-// SEC("lsm/socket_getpeername")
-// int BPF_PROG(socket_getpeername, struct socket *sock){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, SOCKET_GETPEERNAME);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_GETPEERNAME, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-// SEC("lsm/socket_sendmsg")
-// int BPF_PROG(socket_sendmsg, struct socket *sock, struct msghdr *msg, int size){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, SOCKET_SENDMSG);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_SENDMSG, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-// SEC("lsm/socket_setsockopt")
-// int BPF_PROG(socket_setsockopt, struct socket *sock, int level, int optname){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, SOCKET_SETSOCKOPT);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_SETSOCKOPT, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-// SEC("lsm/socket_shutdown")
-// int BPF_PROG(socket_shutdown, struct socket *sock, int how){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, SOCKET_SHUTDOWN);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, SOCKET_SHUTDOWN, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-// SEC("lsm/capable")
-// int BPF_PROG(capable, const struct cred *cred, struct user_namespace *ns, int cap, unsigned int opts){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns nss;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     nss.pidns = pidns;
-//     nss.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &nss);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(nss, CAPABLE);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, CAPABLE, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-// SEC("lsm/capget")
-// int BPF_PROG(capget, struct task_struct *target, kernel_cap_t *effective, kernel_cap_t *inheritable, kernel_cap_t *permitted){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, CAPGET);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, CAPGET, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-// SEC("lsm/capset")
-// int BPF_PROG(capset, struct cred *new, const struct cred *old, const kernel_cap_t *effective, const kernel_cap_t *inheritable, const kernel_cap_t *permitted){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, CAPSET);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, CAPSET, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-// SEC("lsm/quotactl")
-// int BPF_PROG(quotactl, int cmds, int type, int id, struct super_block *sb){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, QUOTACTL);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, QUOTACTL, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-// SEC("lsm/syslog")
-// int BPF_PROG(syslog, int type){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, SYSLOG);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, SYSLOG, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-// SEC("lsm/settime")
-// int BPF_PROG(settime, const struct timespec64 *ts, const struct timezone *tz){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, SETTIME);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, SETTIME, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-
-
-// SEC("lsm/sb_free_mnt_opts")
-// int BPF_PROG(sb_free_mnt_opts, void **mnt_opts){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, SB_FREE_MNT_OPTS);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, SB_FREE_MNT_OPTS, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-
-// SEC("lsm/sb_statfs")
-// int BPF_PROG(sb_statfs, struct dentry *dentry){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, SB_STATFS);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, SB_STATFS, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-
-// SEC("lsm/sb_pivotroot")
-// int BPF_PROG(sb_pivotroot, const struct path *old_path, const struct path *new_path){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, SB_PIVOTROOT);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, SB_PIVOTROOT, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-
-// SEC("lsm/move_mount")
-// int BPF_PROG(move_mount, const struct path *from_path, const struct path *to_path){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, MOVE_MOUNT);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, MOVE_MOUNT, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-
-// SEC("lsm/path_notify")
-// int BPF_PROG(path_notify, const struct path *path, u64 mask, unsigned int obj_type){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, PATH_NOTIFY);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, PATH_NOTIFY, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-
-// SEC("lsm/path_mkdir")
-// int BPF_PROG(path_mkdir, const struct path *dir, struct dentry *dentry, umode_t mode){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, PATH_MKDIR);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, PATH_MKDIR, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-
-// SEC("lsm/path_rmdir")
-// int BPF_PROG(path_rmdir, const struct path *dir, struct dentry *dentry){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, PATH_RMDIR);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, PATH_RMDIR, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-
-// SEC("lsm/path_unlink")
-// int BPF_PROG(path_unlink, const struct path *dir, struct dentry *dentry){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, PATH_UNLINK);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, PATH_UNLINK, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-
-// SEC("lsm/path_symlink")
-// int BPF_PROG(path_symlink, const struct path *dir, struct dentry *dentry, const char *old_name){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, PATH_SYMLINK);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, PATH_SYMLINK, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-
-// SEC("lsm/path_link")
-// int BPF_PROG(path_link, struct dentry *old_dentry, const struct path *new_dir, struct dentry *new_dentry){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, PATH_LINK);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, PATH_LINK, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-
-// SEC("lsm/path_rename")
-// int BPF_PROG(path_rename, const struct path *old_dir, struct dentry *old_dentry, const struct path *new_dir, struct dentry *new_dentry, unsigned int flags){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, PATH_RENAME);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, PATH_RENAME, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-
-// SEC("lsm/path_truncate")
-// int BPF_PROG(path_truncate, const struct path *path){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, PATH_TRUNCATE);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, PATH_TRUNCATE, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-
-// SEC("lsm/path_chown")
-// int BPF_PROG(path_chown, const struct path *path, kuid_t uid, kgid_t gid){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, PATH_CHOWN);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, PATH_CHOWN, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-
-// SEC("lsm/path_chroot")
-// int BPF_PROG(path_chroot, const struct path *path){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, PATH_CHROOT);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, PATH_CHROOT, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-
-// SEC("lsm/mmap_file")
-// int BPF_PROG(mmap_file, struct file *file, unsigned long prot, unsigned long flags){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, MMAP_FILE);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, MMAP_FILE, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-
-// SEC("lsm/mmap_addr")
-// int BPF_PROG(mmap_addr, unsigned long addr){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, MMAP_ADDR);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, MMAP_ADDR, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-
-// SEC("lsm/file_fcntl")
-// int BPF_PROG(file_fcntl, struct file *file, unsigned int cmd, unsigned long arg){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, FILE_FCNTL);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, FILE_FCNTL, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-
-// SEC("lsm/task_setpgid")
-// int BPF_PROG(task_setpgid, struct task_struct *p, pid_t pgid){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, TASK_SETPGID);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, TASK_SETPGID, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-
-// SEC("lsm/task_getpgid")
-// int BPF_PROG(task_getpgid, struct task_struct *p){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, TASK_GETPGID);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, TASK_GETPGID, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }
-
-
-// SEC("lsm/task_getsid")
-// int BPF_PROG(task_getsid, struct task_struct *p){
-//     u32 pid = bpf_get_current_pid_tgid() >> 32;
-//     u8 comm[16] = {0};
-//     bpf_get_current_comm(comm, 16);
-//     struct task_struct *task = (struct task_struct*)bpf_get_current_task();
-//     if(!task)
-//         return 0;
-//     struct pid_mount_ns ns;
-//     u32 pidns = getPidInum(task);
-//     u32 mntns = getMntInum(task);
-//     ns.pidns = pidns;
-//     ns.mountns = mntns;
-//     u32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);
-//     if(!is_container_process)
-//         return 0;
-//     u32 syscall = lookup_syscall(ns, TASK_GETSID);
-    
-//     u32 init_failed = set_syscall_map(pidns, mntns, TASK_GETSID, 0);
-//     if(init_failed)
-//         return 0;
-        
-//     u32 policy = lookup_policy(pidns, mntns, syscall);
-//     if(!policy){
-//         return 0;
-//     }
-
-//     struct event *new_event = NULL;
-//     new_event = bpf_ringbuf_reserve(&events, sizeof(struct event), 0);
-//     if (new_event == NULL) {
-//         return 0;
-//     }
-//     new_event->pid = pid;
-//     for (u8 i = 0 ; i < 16 ; i++) new_event->comm[i] = comm[i];
-//     bpf_ringbuf_submit(new_event, 0);
-//     return 0;
-// }

@@ -24,7 +24,12 @@ with open("syscalls2.txt", "r") as file:
                 "\tu32 *is_container_process = bpf_map_lookup_elem(&monitoring_map, &ns);\n"\
                 "\tif(!is_container_process)\n"\
                     "\t\treturn 0;\n"\
-                '\tbpf_printk("{} syscall triggered for pidns %u", pidns);\n'\
+                "\t//if(!ctx) {{\n"\
+                    '\t\t//bpf_printk("ctx is null");\n'\
+                    "\t\t//return 0;}}\n"\
+                '\t//u64 id = ctx->id;\n'\
+                '\t//bpf_printk("{} syscall triggered for syscall num %u", id);\n'\
+                '\t//set_syscall_map(id);\n'\
                 "\treturn 0;\n"\
             "}}\n\n".format(syscall,syscall,syscall)
 

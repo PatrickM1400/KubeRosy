@@ -7,10 +7,13 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"path"
+	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/cilium/ebpf"
@@ -60,7 +63,7 @@ func main() {
 	defer rtp_sys_enter.Close()
 	log.Println("rtp_sys_enter Attached!")
 
-	// rtp_sys_enter_tail, err := link.AttachRawTracepoint(link.RawTracepointOptions{Name:"sys_enter_tail",Program: objs.RtpSysEnterTail})
+	// rtp_sys_enter_tail, err := link.AttachRawTracepoint(link.RawTracepointOptions{Name: "sys_enter_tail", Program: objs.RtpSysEnterTail})
 	// if err != nil {
 	// 	log.Fatalf("opening rtp_sys_enter_tail: %s", err)
 	// }
@@ -1447,190 +1450,6 @@ func main() {
 	defer sys_writev_hook.Close()
 	log.Println("sys_writev kprobe attached!")
 
-	// lsm_task_alloc, _ := link.AttachLSM(link.LSMOptions{Program: objs.TaskAlloc})
-	// defer lsm_task_alloc.Close()
-	// log.Println("lsm_task_alloc Attached!")
-
-	// lsm_bprm_check, _ := link.AttachLSM(link.LSMOptions{Program: objs.BprmCheck})
-	// defer lsm_bprm_check.Close()
-	// log.Println("lsm_bprm_check Attached!")
-
-	// lsm_ptrace_check, _ := link.AttachLSM(link.LSMOptions{Program: objs.PtraceCheck})
-	// defer lsm_ptrace_check.Close()
-	// log.Println("lsm_ptrace_check Attached!")
-
-	// lsm_path_chmod, _ := link.AttachLSM(link.LSMOptions{Program: objs.PathChmod})
-	// defer lsm_path_chmod.Close()
-	// log.Println("lsm_path_chmod Attached!")
-
-	// lsm_file_mprotect, _ := link.AttachLSM(link.LSMOptions{Program: objs.FileMprotect})
-	// defer lsm_file_mprotect.Close()
-	// log.Println("lsm_file_mprotect Attached!")
-
-	// lsm_fix_setgid, _ := link.AttachLSM(link.LSMOptions{Program: objs.FixSetgid})
-	// defer lsm_fix_setgid.Close()
-	// log.Println("lsm_fix_setgid Attached!")
-
-	// lsm_fix_setuid, _ := link.AttachLSM(link.LSMOptions{Program: objs.FixSetuid})
-	// defer lsm_fix_setuid.Close()
-	// log.Println("lsm_fix_setuid Attached!")
-
-	// lsm_socket_accept, _ := link.AttachLSM(link.LSMOptions{Program: objs.SocketAccept})
-	// defer lsm_socket_accept.Close()
-	// log.Println("lsm_socket_accept Attached!")
-
-	// lsm_socket_bind, _ := link.AttachLSM(link.LSMOptions{Program: objs.SocketBind})
-	// defer lsm_socket_bind.Close()
-	// log.Println("lsm_socket_bind Attached!")
-
-	// lsm_socket_connect, _ := link.AttachLSM(link.LSMOptions{Program: objs.SocketConnect})
-	// defer lsm_socket_connect.Close()
-	// log.Println("lsm_socket_connect Attached!")
-
-	// lsm_socket_listen, _ := link.AttachLSM(link.LSMOptions{Program: objs.SocketListen})
-	// defer lsm_socket_listen.Close()
-	// log.Println("lsm_socket_listen Attached!")
-
-	// lsm_socket_recvmsg, _ := link.AttachLSM(link.LSMOptions{Program: objs.SocketRecvmsg})
-	// defer lsm_socket_recvmsg.Close()
-	// log.Println("lsm_socket_recvmsg Attached!")
-
-	// lsm_socket_create, _ := link.AttachLSM(link.LSMOptions{Program: objs.SocketCreate})
-	// defer lsm_socket_create.Close()
-	// log.Println("lsm_socket_create Attached!")
-
-	// lsm_file_permission, _ := link.AttachLSM(link.LSMOptions{Program: objs.FilePermission})
-	// defer lsm_file_permission.Close()
-	// log.Println("lsm_file_permission Attached!")
-
-	// lsm_socket_getpeername, _ := link.AttachLSM(link.LSMOptions{Program: objs.SocketGetpeername})
-	// defer lsm_socket_getpeername.Close()
-	// log.Println("lsm_socket_getpeername Attached!")
-
-	// lsm_socket_getsockname, _ := link.AttachLSM(link.LSMOptions{Program: objs.SocketGetsockname})
-	// defer lsm_socket_getsockname.Close()
-	// log.Println("lsm_socket_getsockname Attached!")
-
-	// lsm_socket_getsockopt, _ := link.AttachLSM(link.LSMOptions{Program: objs.SocketGetsockopt})
-	// defer lsm_socket_getsockopt.Close()
-	// log.Println("lsm_socket_getsockopt Attached!")
-
-	// lsm_socket_sendmsg, _ := link.AttachLSM(link.LSMOptions{Program: objs.SocketSendmsg})
-	// defer lsm_socket_sendmsg.Close()
-	// log.Println("lsm_socket_sendmsg Attached!")
-
-	// lsm_socket_setsockopt, _ := link.AttachLSM(link.LSMOptions{Program: objs.SocketSetsockopt})
-	// defer lsm_socket_setsockopt.Close()
-	// log.Println("lsm_socket_setsockopt Attached!")
-
-	// lsm_socket_shutdown, _ := link.AttachLSM(link.LSMOptions{Program: objs.SocketShutdown})
-	// defer lsm_socket_shutdown.Close()
-	// log.Println("lsm_socket_shutdown Attached!")
-
-	// lsm_capable, _ := link.AttachLSM(link.LSMOptions{Program: objs.Capable})
-	// defer lsm_capable.Close()
-	// log.Println("lsm_capable Attached!")
-
-	// lsm_capget, _ := link.AttachLSM(link.LSMOptions{Program: objs.Capget})
-	// defer lsm_capget.Close()
-	// log.Println("lsm_capget Attached!")
-
-	// lsm_capset, _ := link.AttachLSM(link.LSMOptions{Program: objs.Capset})
-	// defer lsm_capset.Close()
-	// log.Println("lsm_capset Attached!")
-
-	// lsm_quotactl, _ := link.AttachLSM(link.LSMOptions{Program: objs.Quotactl})
-	// defer lsm_quotactl.Close()
-	// log.Println("lsm_quotactl Attached!")
-
-	// lsm_syslog, _ := link.AttachLSM(link.LSMOptions{Program: objs.Syslog})
-	// defer lsm_syslog.Close()
-	// log.Println("lsm_syslog Attached!")
-
-	// lsm_settime, _ := link.AttachLSM(link.LSMOptions{Program: objs.Settime})
-	// defer lsm_settime.Close()
-	// log.Println("lsm_settime Attached!")
-
-	// lsm_sb_free_mnt_opts, _ := link.AttachLSM(link.LSMOptions{Program: objs.SbFreeMntOpts})
-	// defer lsm_sb_free_mnt_opts.Close()
-	// log.Println("lsm_sb_free_mnt_opts Attached!")
-
-	// lsm_sb_statfs, _ := link.AttachLSM(link.LSMOptions{Program: objs.SbStatfs})
-	// defer lsm_sb_statfs.Close()
-	// log.Println("lsm_sb_statfs Attached!")
-
-	// lsm_sb_pivotroot, _ := link.AttachLSM(link.LSMOptions{Program: objs.SbPivotroot})
-	// defer lsm_sb_pivotroot.Close()
-	// log.Println("lsm_sb_pivotroot Attached!")
-
-	// lsm_move_mount, _ := link.AttachLSM(link.LSMOptions{Program: objs.MoveMount})
-	// defer lsm_move_mount.Close()
-	// log.Println("lsm_move_mount Attached!")
-
-	// lsm_path_notify, _ := link.AttachLSM(link.LSMOptions{Program: objs.PathNotify})
-	// defer lsm_path_notify.Close()
-	// log.Println("lsm_path_notify Attached!")
-
-	// lsm_path_mkdir, _ := link.AttachLSM(link.LSMOptions{Program: objs.PathMkdir})
-	// defer lsm_path_mkdir.Close()
-	// log.Println("lsm_path_mkdir Attached!")
-
-	// lsm_path_rmdir, _ := link.AttachLSM(link.LSMOptions{Program: objs.PathRmdir})
-	// defer lsm_path_rmdir.Close()
-	// log.Println("lsm_path_rmdir Attached!")
-
-	// lsm_path_unlink, _ := link.AttachLSM(link.LSMOptions{Program: objs.PathUnlink})
-	// defer lsm_path_unlink.Close()
-	// log.Println("lsm_path_unlink Attached!")
-
-	// lsm_path_symlink, _ := link.AttachLSM(link.LSMOptions{Program: objs.PathSymlink})
-	// defer lsm_path_symlink.Close()
-	// log.Println("lsm_path_symlink Attached!")
-
-	// lsm_path_link, _ := link.AttachLSM(link.LSMOptions{Program: objs.PathLink})
-	// defer lsm_path_link.Close()
-	// log.Println("lsm_path_link Attached!")
-
-	// lsm_path_rename, _ := link.AttachLSM(link.LSMOptions{Program: objs.PathRename})
-	// defer lsm_path_rename.Close()
-	// log.Println("lsm_path_rename Attached!")
-
-	// lsm_path_truncate, _ := link.AttachLSM(link.LSMOptions{Program: objs.PathTruncate})
-	// defer lsm_path_truncate.Close()
-	// log.Println("lsm_path_truncate Attached!")
-
-	// lsm_path_chown, _ := link.AttachLSM(link.LSMOptions{Program: objs.PathChown})
-	// defer lsm_path_chown.Close()
-	// log.Println("lsm_path_chown Attached!")
-
-	// lsm_path_chroot, _ := link.AttachLSM(link.LSMOptions{Program: objs.PathChroot})
-	// defer lsm_path_chroot.Close()
-	// log.Println("lsm_path_chroot Attached!")
-
-	// lsm_mmap_file, _ := link.AttachLSM(link.LSMOptions{Program: objs.MmapFile})
-	// defer lsm_mmap_file.Close()
-	// log.Println("lsm_mmap_file Attached!")
-
-	// lsm_mmap_addr, _ := link.AttachLSM(link.LSMOptions{Program: objs.MmapAddr})
-	// defer lsm_mmap_addr.Close()
-	// log.Println("lsm_mmap_addr Attached!")
-
-	// lsm_file_fcntl, _ := link.AttachLSM(link.LSMOptions{Program: objs.FileFcntl})
-	// defer lsm_file_fcntl.Close()
-	// log.Println("lsm_file_fcntl Attached!")
-
-	// lsm_task_setpgid, _ := link.AttachLSM(link.LSMOptions{Program: objs.TaskSetpgid})
-	// defer lsm_task_setpgid.Close()
-	// log.Println("lsm_task_setpgid Attached!")
-
-	// lsm_task_getpgid, _ := link.AttachLSM(link.LSMOptions{Program: objs.TaskGetpgid})
-	// defer lsm_task_getpgid.Close()
-	// log.Println("lsm_task_getpgid Attached!")
-
-	// lsm_task_getsid, _ := link.AttachLSM(link.LSMOptions{Program: objs.TaskGetsid})
-	// defer lsm_task_getsid.Close()
-	// log.Println("lsm_task_getsid Attached!")
-
 	rd, err := ringbuf.NewReader(objs.Events)
 	if err != nil {
 		log.Fatalf("opening ringbuf reader: %s", err)
@@ -1652,11 +1471,37 @@ func main() {
 		}
 		defer policy_map.Close()
 
-		lsm_to_syscall, err := ebpf.LoadPinnedMap("/sys/fs/bpf/daemon_map/lsm_to_syscall", nil)
-		if err != nil || lsm_to_syscall == nil {
+		syscall_used, err := ebpf.LoadPinnedMap("/sys/fs/bpf/daemon_map/syscall_used", nil)
+		if err != nil || syscall_used == nil {
 			log.Fatalf("Error loading pid_lsm_syscall_map: %v", err)
 		}
-		defer lsm_to_syscall.Close()
+
+		var syscall_list string
+
+		var i uint64
+		for i = 0; i < 512; i++ {
+			var syscall_exists uint32 = 0
+			err := syscall_used.Lookup(i, &syscall_exists)
+			if err != nil {
+				fmt.Println("Syscall not used", i)
+			} else {
+				syscall_list = strings.Join([]string{syscall_list, strconv.Itoa(int(i))}, ",")
+			}
+		}
+		syscall_list = strings.Join([]string{syscall_list, "\n"}, "")
+
+		f, err := os.OpenFile("syscall_associations.txt", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0777)
+		if err != nil {
+			panic(err)
+		}
+
+		defer f.Close()
+
+		if _, err = f.WriteString(syscall_list); err != nil {
+			panic(err)
+		}
+
+		defer syscall_used.Close()
 
 		policy_params_bprm_check, err := ebpf.LoadPinnedMap("/sys/fs/bpf/daemon_map/policy_params_bprm_check", nil)
 		if err != nil || policy_params_bprm_check == nil {
@@ -1753,7 +1598,7 @@ func main() {
 			log.Fatalf("could not delete element : %s", err)
 		}
 
-		err = lsm_to_syscall.Unpin()
+		err = syscall_used.Unpin()
 		if err != nil {
 			log.Fatalf("could not delete element : %s", err)
 		}
