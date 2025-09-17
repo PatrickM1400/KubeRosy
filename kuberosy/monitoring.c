@@ -53,7 +53,7 @@ struct {
 struct {
     __uint(type, BPF_MAP_TYPE_HASH);
     __type(key, struct pid_mount_ns);
-    __type(value, __u64[9]);
+    __type(value, __u64[8]);
     __uint(max_entries, 64);
     __uint(pinning, LIBBPF_PIN_BY_NAME);
 } policy_map SEC(".maps");
@@ -210,23 +210,23 @@ struct {
 
 /////////////////////////////////////////////////
 
-u32 lookup_policy(u32 pidns, u32 mntns, u32 syscall){
-    struct pid_mount_ns ns;
-    ns.pidns = pidns;
-    ns.mountns = mntns;
-    u64 mask = 1 << (syscall % 64);
-    u32 share = syscall / 64;
-    if(share > 9 || share < 0)
-        return 0;
-    if(syscall < 0 || syscall > 547)
-        return 0;
-    u64 *policy_arr = bpf_map_lookup_elem(&policy_map, &ns);
-    if(!policy_arr)
-        return 0;
-    if(policy_arr[share] & mask)
-        return 1;
-    return 0;
-}
+// u32 lookup_policy(u32 pidns, u32 mntns, u32 syscall){
+//     struct pid_mount_ns ns;
+//     ns.pidns = pidns;
+//     ns.mountns = mntns;
+//     u64 mask = 1 << (syscall % 64);
+//     u32 share = syscall / 64;
+//     if(share > 9 || share < 0)
+//         return 0;
+//     if(syscall < 0 || syscall > 547)
+//         return 0;
+//     u64 *policy_arr = bpf_map_lookup_elem(&policy_map, &ns);
+//     if(!policy_arr)
+//         return 0;
+//     if(policy_arr[share] & mask)
+//         return 1;
+//     return 0;
+// }
 
 u32 set_syscall_map(u64 syscall_num){
     u32 val = 1; // Namespace struct exist, updating lsm to syscall mapping
@@ -291,9 +291,12 @@ int rtp_sys_enter(struct bpf_raw_tracepoint_args *ctx){
     bpf_printk("Within sys_enter 1");
     if(!is_container_process)
         return 0;
+
+	u32 *policy = bpf_map_lookup_elem(&policy_map, &ns);
+
     // bpf_tail_call(ctx, &prog_array, SYS_ENTER_TAIL);
-    u64 id = ctx->args[1];
-    set_syscall_map(id);
+    u64 syscall_num = ctx->args[1];
+    set_syscall_map(syscall_num);
     bpf_printk("Within sys_enter 2");
     return 0;
 }

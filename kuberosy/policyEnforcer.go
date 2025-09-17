@@ -5,7 +5,13 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
+
+func delayedSigterm(stopper chan os.Signal) {
+	time.Sleep(60 * time.Second)
+
+}
 
 func consoleCommands() {
 

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -15,12 +16,20 @@ import (
 const (
 	comm_pid_map_path = "/sys/fs/bpf/daemon_map/containerID_PID_map"
 	monitoring_map    = "/sys/fs/bpf/daemon_map/monitoring_map"
+	policy_map        = "/sys/fs/bpf/daemon_map/policy_map"
 )
 
 type pid_mount_ns struct {
 	mountns uint64
 	pidns   uint64
 }
+
+type AllowedSyscalls struct {
+	AllowedSyscalls []int
+}
+
+// Global variable for default seccomp profile used on container initilization
+var DefaultProfile [8]uint64
 
 type ContainerDaemon struct {
 	EventChan <-chan events.Message
@@ -50,6 +59,31 @@ func init() {
 	}
 
 	log.SetOutput(logFile)
+
+	// Generate default seccomp allow policy
+	syscallFilename := "init_profile_allowed.json"
+	content, err := os.ReadFile(syscallFilename)
+	if err != nil {
+		log.Fatal("Error when opening file: ", err)
+	}
+
+	var payload AllowedSyscalls
+	err = json.Unmarshal(content, &payload)
+	if err != nil {
+		log.Fatal("Error during Unmarshal(): ", err)
+	}
+
+	len := len(payload.AllowedSyscalls)
+	for i := 0; i < len; i++ {
+		syscall_num := payload.AllowedSyscalls[i]
+		idx := syscall_num / 64
+		mask := syscall_num % 64
+
+		var tmp uint64 = DefaultProfile[idx]
+		tmp = tmp | (1 << mask)
+		DefaultProfile[idx] = tmp
+	}
+	// fmt.Println(DefaultProfile)
 }
 
 // getNamespaceID reads the symbolic link for a given namespace type and parses the ID.
@@ -174,6 +208,7 @@ func (cm *ContainerDaemon) UpdateContainer(containerID, action string) {
 			log.Printf("Process Namespace ID: %d\n", pidNS_ID)
 			log.Printf("Mount Namespace ID:   %d\n", mntNS_ID)
 
+			// Set monitoring_map so kernel program knows process is runnning in container
 			bpf_monitoring_map, err := ebpf.LoadPinnedMap(monitoring_map, nil)
 			if err != nil || bpf_monitoring_map == nil {
 				log.Fatalf("Error loading pinned map: %v", err)
@@ -184,6 +219,18 @@ func (cm *ContainerDaemon) UpdateContainer(containerID, action string) {
 			var val uint32 = 1
 
 			err = bpf_monitoring_map.Update(ns, val, ebpf.UpdateAny)
+			if err != nil {
+				log.Printf("could not put element to map: %s", err)
+			}
+
+			// Load default seccomp syscall allow list profile upon container init
+			bpf_policy_map, err := ebpf.LoadPinnedMap(policy_map, nil)
+			if err != nil || bpf_monitoring_map == nil {
+				log.Fatalf("Error loading pinned map: %v", err)
+			}
+			defer bpf_monitoring_map.Close()
+
+			err = bpf_policy_map.Update(ns, DefaultProfile, ebpf.UpdateAny)
 			if err != nil {
 				log.Printf("could not put element to map: %s", err)
 			}
